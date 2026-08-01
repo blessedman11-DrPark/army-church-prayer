@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 모바일 편의성 극대화: 양쪽 끝(왼쪽/오른쪽) 모두 시간열(Time Column) 렌더링
+ * 수요일과 목요일 사이에 콤팩트 미니 '시간' 열(시작시간만 표시) 배치
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -92,6 +92,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const m = String(nextMonday.getMonth() + 1).padStart(2, '0');
     const d = String(nextMonday.getDate()).padStart(2, '0');
     return `${y}-${m}-${d}`;
+  }
+
+  // 🌟 시작 시간만 콤팩트하게 추출 (예: '05시', '09시', '10시')
+  function getShortHourLabel(rawTimeStr, timeIdx) {
+    if (timeIdx === 0) return '05시';
+    if (timeIdx === 11) return '19시';
+    const match = rawTimeStr.match(/(\d{2}):\d{2}/);
+    if (match) {
+      return `${match[1]}시`;
+    }
+    return rawTimeStr;
   }
 
   function setupEventListeners() {
@@ -280,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 타임테이블 렌더링 (양쪽 끝 시간열 보장) ---
+  // --- 타임테이블 렌더링 (수요일/목요일 사이 시작시간 콤팩트 미니 시간열 삽입) ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -298,28 +309,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const rawTimeStr = slotData.time || TIME_LABELS[timeIdx];
 
-      // 1. 왼쪽 시간 셀 생성
+      // 1. 맨 왼쪽 풀 시간 셀 생성
       const tdTimeLeft = document.createElement('td');
       tdTimeLeft.className = 'time-cell time-cell-left';
 
-      // 2. 오른쪽 시간 셀 생성 (모바일 오른쪽 스크롤 시 직관적 확인 지원)
-      const tdTimeRight = document.createElement('td');
-      tdTimeRight.className = 'time-cell time-cell-right';
-
       if (rawTimeStr.includes('(자유시간)')) {
         const cleanTime = rawTimeStr.replace('(자유시간)', '').trim();
-        const freeHtml = `<span class="free-time-badge">자유시간</span><div style="margin-top: 3px; font-weight: 700;">${cleanTime}</div>`;
-        tdTimeLeft.innerHTML = freeHtml;
-        tdTimeRight.innerHTML = freeHtml;
+        tdTimeLeft.innerHTML = `<span class="free-time-badge">자유시간</span><div style="margin-top: 3px; font-weight: 700;">${cleanTime}</div>`;
       } else {
         tdTimeLeft.textContent = rawTimeStr;
-        tdTimeRight.textContent = rawTimeStr;
       }
 
-      // 왼쪽 시간 셀 삽입
       tr.appendChild(tdTimeLeft);
 
-      // 월~일 7개 요일 슬롯 셀 삽입
+      // 월~일 7개 요일 슬롯 및 수/목 사이 미니 시간 셀 삽입
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const dayData = slotData.days[dayIdx] || { slot1: '', slot2: '' };
         const tdDay = document.createElement('td');
@@ -340,10 +343,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         tdDay.appendChild(slotWrapper);
         tr.appendChild(tdDay);
-      }
 
-      // 🌟 오른쪽 시간 셀 삽입!
-      tr.appendChild(tdTimeRight);
+        // 🌟 수요일(dayIdx === 2) 직후에 콤팩트 미니 '시간' 셀(시작시간만 표시) 삽입!
+        if (dayIdx === 2) {
+          const tdTimeMid = document.createElement('td');
+          tdTimeMid.className = 'time-cell time-cell-mid';
+          tdTimeMid.textContent = getShortHourLabel(rawTimeStr, timeIdx);
+          tr.appendChild(tdTimeMid);
+        }
+      }
 
       timetableBody.appendChild(tr);
     });

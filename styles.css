@@ -271,9 +271,16 @@ body {
   width: 120px;
 }
 
-.th-time-right {
-  border-top-right-radius: var(--radius-sm);
-  width: 120px;
+/* 🌟 수요일과 목요일 사이 슬림 콤팩트 미니 '시간' 헤더 */
+.th-time-mid {
+  width: 54px !important;
+  background: #1e3a8a !important;
+  color: #ffffff !important;
+  font-size: 14.5px !important;
+  font-weight: 700 !important;
+  text-align: center;
+  border-left: 2px solid #1d4ed8 !important;
+  border-right: 2px solid #1d4ed8 !important;
 }
 
 .timetable th .day-title {
@@ -305,7 +312,7 @@ body {
 .col-day-5 { background-color: #ffe4e6 !important; }
 .col-day-6 { background-color: #fef08a !important; }
 
-/* 양쪽 시간 셀 스타일 */
+/* 왼쪽 풀 시간 셀 */
 .time-cell {
   background: #f8fafc;
   font-weight: 700;
@@ -320,9 +327,17 @@ body {
   border-right: 2px solid #cbd5e1 !important;
 }
 
-.time-cell-right {
+/* 🌟 수요일과 목요일 사이 슬림 콤팩트 미니 시작시간 셀 (예: 05시, 09시...) */
+.time-cell-mid {
+  background: #e2e8f0 !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  color: #1e293b !important;
+  text-align: center !important;
+  white-space: nowrap !important;
   border-left: 2px solid #cbd5e1 !important;
-  border-right: none !important;
+  border-right: 2px solid #cbd5e1 !important;
+  padding: 4px 2px !important;
 }
 
 /* 자유시간 뱃지 스타일 */
