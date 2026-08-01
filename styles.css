@@ -244,7 +244,7 @@ body {
 
 .legend-box.filled {
   background: #ffffff;
-  border: 1px solid #94a3b8;
+  border: 1px solid var(--slot-empty-border);
 }
 
 /* 타임테이블 카드 컨테이너 */
@@ -264,15 +264,15 @@ body {
   min-width: 950px;
 }
 
-/* 헤더 행 (시인성 100% 강화) */
+/* 헤더 행 (검정색 제거 ➔ 아름답고 경건한 딥 네이비 브랜드 컬러 & 화이트 폰트) */
 .timetable th {
-  background: #0f172a !important;
+  background: #1e3a8a !important;
   color: #ffffff !important;
   padding: 12px 4px;
   font-size: 15px;
   font-weight: 700;
   text-align: center;
-  border-bottom: 3px solid #1e3a8a;
+  border-bottom: 3px solid #1d4ed8;
 }
 
 .timetable th:first-child {
@@ -288,14 +288,14 @@ body {
   font-size: 16px;
   font-weight: 700;
   color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
   letter-spacing: -0.3px;
 }
 
 .timetable th .slot-sub {
   font-size: 12px;
   font-weight: 500;
-  color: #cbd5e1 !important;
+  color: #e0e7ff !important;
   margin-top: 3px;
   letter-spacing: -0.3px;
 }
@@ -346,7 +346,7 @@ body {
   letter-spacing: -0.3px;
 }
 
-/* 기도 신청 슬롯 버튼 */
+/* 기도 신청 슬롯 버튼 (검정 테두리 완전 제거 -> 빈 박스와 100% 동일한 부드러운 테두리 및 배경) */
 .slot-wrapper {
   display: flex;
   gap: 4px;
@@ -358,8 +358,8 @@ body {
   min-height: 38px;
   padding: 4px 6px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--slot-empty-border);
-  background: #ffffff;
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
   color: #334155;
   font-size: 13.5px;
   font-weight: 500;
@@ -372,22 +372,22 @@ body {
 }
 
 .slot-btn:hover {
-  background: #e2e8f0;
-  border-color: #94a3b8;
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
 }
 
-/* 신청 완료 박스 스타일 (검정 테두리 제거 ➔ 주변과 부드럽게 어우러지는 소프트 보더) */
+/* 신청 완료 박스도 빈 박스와 100% 동일한 부드러운 #cbd5e1 보더 적용 (검정색 테두리 제거) */
 .slot-btn.filled {
   background: #ffffff !important;
-  border: 1px solid #94a3b8 !important;
+  border: 1px solid #cbd5e1 !important;
   color: #1e293b !important;
   font-weight: 700 !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  box-shadow: none !important;
 }
 
 .slot-btn.filled:hover {
-  background: #f8fafc !important;
-  border-color: #64748b !important;
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
 }
 
 /* 임명 안내 카드 */
