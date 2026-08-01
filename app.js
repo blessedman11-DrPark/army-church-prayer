@@ -1,12 +1,15 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 초고속 성능 최적화: 인메모리 SWR 캐싱 & 낙관적 UI(Optimistic UI) 적용
+ * 초고속 성능 최적화: 인메모리 SWR 캐싱 & 낙관적 UI(Optimistic UI) & 기본 API 내장
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 🔗 모든 사용자가 접속 즉시 연동되는 기본 구글 앱스 스크립트 배포 URL
+  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwRYIJKys8MTdyk-PCM-YukyOMLXq6UuBkANIKiL7MfPSSm80skmkHPr7_Ba00lilwxsw/exec';
+
   // --- 상태 관리 ---
   const STATE = {
-    apiUrl: localStorage.getItem('gas_api_url') || '',
+    apiUrl: localStorage.getItem('gas_api_url') || DEFAULT_API_URL,
     currentSheet: '8월 1주차',
     startDate: getTodayDateStr(), // 기본값: 오늘 날짜 (YYYY-MM-DD)
     sheets: ['8월 1주차'],
@@ -138,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnConfirmDeleteWeek.addEventListener('click', deleteCurrentWeek);
 
     btnSaveApi.addEventListener('click', () => {
-      const url = inputApiUrl.value.trim();
+      const url = inputApiUrl.value.trim() || DEFAULT_API_URL;
       STATE.apiUrl = url;
       localStorage.setItem('gas_api_url', url);
       closeModal(apiSettingsModal);
@@ -224,7 +227,6 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchData(forceRefresh = false) {
     const cacheKey = STATE.currentSheet;
 
-    // 1. 캐시 데이터가 있으면 0.001초 만에 즉시 렌더링 (대기시간 0초)
     if (!forceRefresh && DATA_CACHE[cacheKey]) {
       const cached = DATA_CACHE[cacheKey];
       STATE.startDate = cached.startDate || STATE.startDate;
@@ -267,7 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         STATE.data = result.data || [];
 
-        // 캐시 업데이트
         DATA_CACHE[STATE.currentSheet] = {
           startDate: STATE.startDate,
           data: STATE.data
@@ -387,19 +388,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     closeModal(applyModal);
 
-    // 0.001초 즉시 반응 (낙관적 UI)
     if (STATE.data[timeIndex] && STATE.data[timeIndex].days[dayIndex]) {
       if (slotIndex === 0) STATE.data[timeIndex].days[dayIndex].slot1 = name;
       else STATE.data[timeIndex].days[dayIndex].slot2 = name;
     }
     
-    // 캐시 업데이트 및 렌더링
     if (DATA_CACHE[STATE.currentSheet]) {
       DATA_CACHE[STATE.currentSheet].data = STATE.data;
     }
     renderTimetable();
 
-    // 백그라운드 비동기 구글 시트 전송 (사용자는 대기시간 없음!)
     if (STATE.apiUrl) {
       try {
         const payload = {
@@ -555,7 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function testApiConnection() {
-    const url = inputApiUrl.value.trim();
+    const url = inputApiUrl.value.trim() || DEFAULT_API_URL;
     if (!url) {
       alert('웹 앱 URL을 입력해 주세요.');
       return;
