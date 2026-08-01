@@ -1,5 +1,5 @@
 /* 육군본부교회 중보기도 출석표 - 디자인 스타일시트 */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
 :root {
   --primary-color: #1e3a8a;       /* 경건하고 신뢰감을 주는 딥 네이비 */
@@ -264,7 +264,7 @@ body {
   min-width: 950px;
 }
 
-/* 헤더 행 (검정색 제거 ➔ 아름답고 경건한 딥 네이비 브랜드 컬러 & 화이트 폰트) */
+/* 헤더 행 */
 .timetable th {
   background: #1e3a8a !important;
   color: #ffffff !important;
@@ -346,7 +346,7 @@ body {
   letter-spacing: -0.3px;
 }
 
-/* 기도 신청 슬롯 버튼 (검정 테두리 완전 제거 -> 빈 박스와 100% 동일한 부드러운 테두리 및 배경) */
+/* 기도 신청 슬롯 버튼 (신청자 폰트 확대 및 고급스러운 딥네이비 컬러링 적용) */
 .slot-wrapper {
   display: flex;
   gap: 4px;
@@ -360,15 +360,16 @@ body {
   border-radius: var(--radius-sm);
   border: 1px solid #cbd5e1 !important;
   background: #ffffff !important;
-  color: #334155;
-  font-size: 13.5px;
-  font-weight: 500;
+  color: #1e3a8a;
+  font-size: 14.5px;  /* 폰트 크기 확대 (13.5px -> 14.5px) */
+  font-weight: 600;   /* 세련되고 부드러운 가독성의 600 세미볼드 */
   cursor: pointer;
   transition: all 0.15s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   word-break: break-all;
+  letter-spacing: -0.2px;
 }
 
 .slot-btn:hover {
@@ -376,12 +377,13 @@ body {
   border-color: #94a3b8 !important;
 }
 
-/* 신청 완료 박스도 빈 박스와 100% 동일한 부드러운 #cbd5e1 보더 적용 (검정색 테두리 제거) */
+/* 신청 완료 박스 폰트 크기 및 고급 컬러 서식 */
 .slot-btn.filled {
   background: #ffffff !important;
   border: 1px solid #cbd5e1 !important;
-  color: #1e293b !important;
-  font-weight: 700 !important;
+  color: #1e3a8a !important; /* 경건하고 세련된 딥 네이비 */
+  font-size: 14.5px !important;
+  font-weight: 600 !important;
   box-shadow: none !important;
 }
 
@@ -574,7 +576,7 @@ body {
 
 /* 로딩 스피너 */
 .loading-overlay {
-  position: absolute;
+  position. absolute;
   top: 0;
   left: 0;
   width: 100%;
