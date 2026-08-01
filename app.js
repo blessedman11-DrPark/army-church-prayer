@@ -1,15 +1,22 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 초고속 성능 최적화: 인메모리 SWR 캐싱 & 낙관적 UI(Optimistic UI) & 기본 API 내장
+ * 초고속 성능 최적화: 인메모리 SWR 캐싱 & 낙관적 UI(Optimistic UI) & 모바일 자동강제 연동
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // 🔗 모든 사용자가 접속 즉시 연동되는 기본 구글 앱스 스크립트 배포 URL
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwRYIJKys8MTdyk-PCM-YukyOMLXq6UuBkANIKiL7MfPSSm80skmkHPr7_Ba00lilwxsw/exec';
 
+  // 모바일/PC 로컬스토리지 저장값 검사 및 기본값 자동 강제 적용
+  let activeApiUrl = localStorage.getItem('gas_api_url');
+  if (!activeApiUrl || activeApiUrl.trim() === '') {
+    activeApiUrl = DEFAULT_API_URL;
+    localStorage.setItem('gas_api_url', DEFAULT_API_URL);
+  }
+
   // --- 상태 관리 ---
   const STATE = {
-    apiUrl: localStorage.getItem('gas_api_url') || DEFAULT_API_URL,
+    apiUrl: activeApiUrl,
     currentSheet: '8월 1주차',
     startDate: getTodayDateStr(), // 기본값: 오늘 날짜 (YYYY-MM-DD)
     sheets: ['8월 1주차'],
