@@ -490,18 +490,19 @@ body {
   color: #475569;
 }
 
-/* 전화번호 통화 링크 스타일 */
+/* 🌟 전화번호 통화 링크 스타일 (주변 폰트 색상과 100% 동일 상속 및 점 현상 제거) */
 .phone-link {
-  color: #1e3a8a;
-  text-decoration: underline;
-  font-weight: 600;
+  color: inherit !important;
+  text-decoration: none !important;
+  font-weight: inherit;
 }
 
-.phone-link:hover {
-  color: #0d9488;
+.phone-link:hover, .phone-link:active {
+  color: var(--primary-color) !important;
+  text-decoration: underline !important;
 }
 
-/* 🌟 모달 팝업 모바일 터치 전용 최적화 (Z-INDEX 999999 및 화면 중앙 고정) */
+/* 모달 팝업 모바일 터치 전용 최적화 */
 .modal-backdrop {
   position: fixed !important;
   top: 0 !important;
