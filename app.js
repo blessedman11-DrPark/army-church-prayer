@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 최신화(강제 새로고침) 버튼 및 다음 주 월요일 자동 계산 적용
+ * 새로고침/최신화 시 구글 시트의 가장 최근(마지막) 생성 시트로 자동 전환 및 표시
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,9 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- 상태 관리 ---
   const STATE = {
     apiUrl: DEFAULT_API_URL,
-    currentSheet: '8월 1주차',
+    currentSheet: null, // 최초 및 최신화 시 null로 설정하여 구글 시트의 가장 마지막 시트를 자동 수신
     startDate: getTodayDateStr(),
-    sheets: ['8월 1주차'],
+    sheets: [],
     data: [],
     selectedSlot: null
   };
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function init() {
     setupEventListeners();
-    fetchData();
+    fetchData(true, true); // 🌟 최초 진입 시 가장 마지막 시트 강제 수신
   }
 
   function getTodayDateStr() {
@@ -83,9 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🌟 당일 날짜 기준 "다음 주 월요일" YYYY-MM-DD 구하기
   function getNextMondayDateStr() {
     const today = new Date();
-    const day = today.getDay(); // 0:일, 1:월, 2:화, 3:수, 4:목, 5:금, 6:토
-
-    // 다음 주 월요일까지 남은 일수 계산
+    const day = today.getDay();
     const daysUntilNextMonday = (day === 0) ? 1 : (8 - day);
 
     const nextMonday = new Date(today);
@@ -100,22 +98,21 @@ document.addEventListener('DOMContentLoaded', () => {
   function setupEventListeners() {
     weekSelect.addEventListener('change', (e) => {
       STATE.currentSheet = e.target.value;
-      fetchData();
+      fetchData(false, false);
     });
 
     btnPrevWeek.addEventListener('click', () => navigateWeek(-1));
     btnNextWeek.addEventListener('click', () => navigateWeek(1));
 
-    // 🔄 최신화 (구글 시트 데이터 강제 새로고침)
+    // 🔄 최신화 클릭 시 구글 시트의 가장 최근(마지막) 시트 강제 수신
     btnRefresh.addEventListener('click', () => {
-      fetchData(true);
+      fetchData(true, true);
     });
 
-    // 🔒 새로운 주간 만들기 클릭 시 다음 주 월요일 날짜 기본 적용
     btnCreateWeek.addEventListener('click', () => {
       inputAdminPassword.value = '';
       inputNewWeekName.value = '';
-      inputMondayDate.value = getNextMondayDateStr(); // 👈 다음 주 월요일로 설정
+      inputMondayDate.value = getNextMondayDateStr();
       openModal(createWeekModal);
       setTimeout(() => inputAdminPassword.focus(), 150);
     });
@@ -125,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('최소 1개의 주차 시트는 보존되어야 합니다.');
         return;
       }
-      deleteSheetTargetName.textContent = STATE.currentSheet;
+      deleteSheetTargetName.textContent = STATE.currentSheet || '현재 주차';
       inputDeleteAdminPassword.value = '';
       openModal(deleteWeekModal);
       setTimeout(() => inputDeleteAdminPassword.focus(), 150);
@@ -153,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function navigateWeek(direction) {
+    if (!STATE.currentSheet) return;
     const currentIndex = STATE.sheets.indexOf(STATE.currentSheet);
     if (currentIndex === -1) return;
 
@@ -160,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newIndex >= 0 && newIndex < STATE.sheets.length) {
       STATE.currentSheet = STATE.sheets[newIndex];
       weekSelect.value = STATE.currentSheet;
-      fetchData();
+      fetchData(false, false);
     }
   }
 
@@ -214,11 +212,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
-  // ⚡ 초고속 데이터 로드 (forceRefresh = true 일 경우 캐시 무시 강제 신규 로드)
-  async function fetchData(forceRefresh = false) {
-    const cacheKey = STATE.currentSheet;
+  // ⚡ 초고속 데이터 로드 (fetchLatestSheet가 true이면 가장 마지막에 생성된 최신 시트로 자동 전환)
+  async function fetchData(forceRefresh = false, fetchLatestSheet = false) {
+    const targetSheetName = fetchLatestSheet ? '' : (STATE.currentSheet || '');
+    const cacheKey = targetSheetName;
 
-    if (!forceRefresh && DATA_CACHE[cacheKey]) {
+    if (!forceRefresh && cacheKey && DATA_CACHE[cacheKey]) {
       const cached = DATA_CACHE[cacheKey];
       STATE.startDate = cached.startDate || STATE.startDate;
       STATE.data = cached.data;
@@ -226,12 +225,13 @@ document.addEventListener('DOMContentLoaded', () => {
       updateTableHeaderDates();
       renderTimetable();
       showLoading(false);
-    } else {
-      showLoading(true);
+      return;
     }
 
+    showLoading(true);
+
     try {
-      const url = `${STATE.apiUrl}?action=getData&sheetName=${encodeURIComponent(STATE.currentSheet)}`;
+      const url = `${STATE.apiUrl}?action=getData${targetSheetName ? `&sheetName=${encodeURIComponent(targetSheetName)}` : ''}`;
       const response = await fetch(url);
       const result = await response.json();
 
@@ -239,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.sheets && result.sheets.length > 0) {
           STATE.sheets = result.sheets;
         }
+        // 백엔드가 돌려준 가장 최근 시트(맨 마지막 시트) 이름으로 currentSheet 설정
         if (result.currentSheet) {
           STATE.currentSheet = result.currentSheet;
         }

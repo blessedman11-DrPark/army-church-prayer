@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - Google Apps Script (GAS) 초고속 백엔드 API
- * 자유시간 라벨 수정: (~ 09:00), (19:00 ~)
+ * 지정 시트 없을 시 '가장 마지막(최신) 생성 시트'를 기본 리턴
  */
 
 function createJsonResponse(data) {
@@ -25,12 +25,13 @@ function doGet(e) {
     var sheetName = e.parameter.sheetName;
     var targetSheet = sheetName ? ss.getSheetByName(sheetName) : null;
     
+    // 🌟 지정 시트가 없거나 새로고침 요청 시 구글 시트의 '가장 마지막 시트(최신 시트)'를 선택
     if (!targetSheet) {
       var sheets = ss.getSheets();
       if (sheets.length === 0) {
         targetSheet = createInitialSheet(ss, "8월 1주차");
       } else {
-        targetSheet = sheets[0];
+        targetSheet = sheets[sheets.length - 1]; // 가장 우측/마지막에 생성된 최신 시트
       }
     }
     
@@ -117,7 +118,7 @@ function doPost(e) {
       ss.deleteSheet(targetSheet);
       
       var remainingSheets = ss.getSheets();
-      var nextSheet = remainingSheets[0];
+      var nextSheet = remainingSheets[remainingSheets.length - 1]; // 삭제 후에도 가장 최근 시트 선택
       var remainingNames = [];
       for (var j = 0; j < remainingSheets.length; j++) {
         remainingNames.push(remainingSheets[j].getName());
