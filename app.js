@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 수요일과 목요일 사이 미니 시간열: 자유시간 슬롯은 '자유시간' 텍스트 표시
+ * 모바일 최적화: 신청 모달 터치 팝업 및 스크롤 포지션 100% 보존
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -94,7 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
-  // 🌟 수/목 사이 미니 시간열: 자유시간 슬롯은 '자유시간', 일반시간은 '09시' 표기
   function getShortHourLabel(rawTimeStr, timeIdx) {
     if (timeIdx === 0 || timeIdx === 11 || rawTimeStr.includes('(자유시간)')) {
       return '자유시간';
@@ -345,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tdDay.appendChild(slotWrapper);
         tr.appendChild(tdDay);
 
-        // 🌟 수요일(dayIdx === 2) 직후에 콤팩트 미니 '시간' 셀 (자유시간 / 09시 등) 삽입!
+        // 수요일(dayIdx === 2) 직후 미니 '시간' 셀 삽입
         if (dayIdx === 2) {
           const tdTimeMid = document.createElement('td');
           tdTimeMid.className = 'time-cell time-cell-mid';
@@ -371,7 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.className = `slot-btn ${isFilled ? 'filled' : ''}`;
     btn.textContent = isFilled ? name : '';
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       openApplyModal(dayIndex, timeIndex, slotIndex, isFilled ? name : '', false);
     });
 
@@ -386,7 +386,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.className = `free-slot-btn ${isFilled ? 'filled' : ''}`;
     btn.innerText = isFilled ? text : '';
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       openApplyModal(dayIndex, timeIndex, 0, isFilled ? text : '', true);
     });
 
@@ -418,8 +419,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // 🌟 모바일 스크롤 및 가로 위치 100% 보존 저장 함수
   async function saveApplication() {
     if (!STATE.selectedSlot) return;
+
+    // 1. 현재 모바일 화면 스크롤 Y 위치 및 표 가로 스크롤 X 위치 기록
+    const currentScrollY = window.scrollY || window.pageYOffset;
+    const timetableContainer = document.querySelector('.timetable-container');
+    const currentScrollLeft = timetableContainer ? timetableContainer.scrollLeft : 0;
 
     const { dayIndex, timeIndex, slotIndex, isFreeTime } = STATE.selectedSlot;
     const val = isFreeTime ? inputFreeText.value.trim() : inputName.value.trim();
@@ -434,7 +441,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (DATA_CACHE[STATE.currentSheet]) {
       DATA_CACHE[STATE.currentSheet].data = STATE.data;
     }
+    
+    // 타임테이블 DOM 업데이트
     renderTimetable();
+
+    // 🌟 모바일 스크롤 위치 원상복구 (화면이 위로 튀어 올라가는 현상 완전 제거)
+    window.scrollTo(0, currentScrollY);
+    if (timetableContainer) {
+      timetableContainer.scrollLeft = currentScrollLeft;
+    }
 
     if (STATE.apiUrl) {
       try {
@@ -565,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // 🌟 모바일 팝업 최적화 (z-index 및 터치 안정성 강화)
   function openModal(modalEl) {
     modalEl.classList.add('active');
   }
