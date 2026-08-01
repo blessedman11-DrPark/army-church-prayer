@@ -327,7 +327,7 @@ body {
   border-right: 2px solid #cbd5e1 !important;
 }
 
-/* 🌟 수요일과 목요일 사이 슬림 콤팩트 미니 시작시간 셀 (예: 05시, 09시...) */
+/* 🌟 수요일과 목요일 사이 슬림 콤팩트 미니 시작시간 셀 */
 .time-cell-mid {
   background: #e2e8f0 !important;
   font-weight: 700 !important;
@@ -352,6 +352,20 @@ body {
   padding: 1px 7px;
   margin-bottom: 2px;
   letter-spacing: -0.3px;
+}
+
+/* 미니 시간열 전용 '자유시간' 뱃지 */
+.free-time-badge-sm {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 1px 3px;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
 }
 
 /* 자유시간 통합 행 스타일 */
@@ -485,7 +499,7 @@ body {
 
 /* 모달 팝업 */
 .modal-backdrop {
-  position: fixed;
+  position.fixed;
   top: 0;
   left: 0;
   width: 100vw;

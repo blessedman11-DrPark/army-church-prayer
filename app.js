@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 수요일과 목요일 사이에 콤팩트 미니 '시간' 열(시작시간만 표시) 배치
+ * 수요일과 목요일 사이 미니 시간열: 자유시간 슬롯은 '자유시간' 텍스트 표시
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -94,10 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
-  // 🌟 시작 시간만 콤팩트하게 추출 (예: '05시', '09시', '10시')
+  // 🌟 수/목 사이 미니 시간열: 자유시간 슬롯은 '자유시간', 일반시간은 '09시' 표기
   function getShortHourLabel(rawTimeStr, timeIdx) {
-    if (timeIdx === 0) return '05시';
-    if (timeIdx === 11) return '19시';
+    if (timeIdx === 0 || timeIdx === 11 || rawTimeStr.includes('(자유시간)')) {
+      return '자유시간';
+    }
     const match = rawTimeStr.match(/(\d{2}):\d{2}/);
     if (match) {
       return `${match[1]}시`;
@@ -291,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 타임테이블 렌더링 (수요일/목요일 사이 시작시간 콤팩트 미니 시간열 삽입) ---
+  // --- 타임테이블 렌더링 ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -344,11 +345,16 @@ document.addEventListener('DOMContentLoaded', () => {
         tdDay.appendChild(slotWrapper);
         tr.appendChild(tdDay);
 
-        // 🌟 수요일(dayIdx === 2) 직후에 콤팩트 미니 '시간' 셀(시작시간만 표시) 삽입!
+        // 🌟 수요일(dayIdx === 2) 직후에 콤팩트 미니 '시간' 셀 (자유시간 / 09시 등) 삽입!
         if (dayIdx === 2) {
           const tdTimeMid = document.createElement('td');
           tdTimeMid.className = 'time-cell time-cell-mid';
-          tdTimeMid.textContent = getShortHourLabel(rawTimeStr, timeIdx);
+          const midLabel = getShortHourLabel(rawTimeStr, timeIdx);
+          if (midLabel === '자유시간') {
+            tdTimeMid.innerHTML = `<span class="free-time-badge-sm">자유시간</span>`;
+          } else {
+            tdTimeMid.textContent = midLabel;
+          }
           tr.appendChild(tdTimeMid);
         }
       }
