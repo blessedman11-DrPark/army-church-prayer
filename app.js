@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 구글 앱스 스크립트 전용 직결 연동 최적화 (스마트폰/PC 100% 무설정 연동)
+ * 자유시간 라벨 수정: (~ 09:00), (19:00 ~)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- 상태 관리 ---
   const STATE = {
-    apiUrl: DEFAULT_API_URL, // 언제나 100% 내장 URL만 직결 사용!
+    apiUrl: DEFAULT_API_URL,
     currentSheet: '8월 1주차',
     startDate: getTodayDateStr(),
     sheets: ['8월 1주차'],
@@ -21,11 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const DATA_CACHE = {};
 
   const TIME_LABELS = [
-    "(자유시간) 05:00 ~ 09:00",
+    "(자유시간) ~ 09:00",
     "09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00",
     "13:00 ~ 14:00", "14:00 ~ 15:00", "15:00 ~ 16:00", "16:00 ~ 17:00",
     "17:00 ~ 18:00", "18:00 ~ 19:00",
-    "(자유시간) 19:00 ~ 22:00"
+    "(자유시간) 19:00 ~"
   ];
 
   const BASE_DAY_NAMES = ["월", "화", "수", "목", "금", "토", "일"];
@@ -190,7 +190,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
-  // ⚡ 초고속 데이터 로드
   async function fetchData(forceRefresh = false) {
     const cacheKey = STATE.currentSheet;
 
@@ -259,7 +258,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 타임테이블 렌더링 ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -369,7 +367,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ⚡ 저장 함수
   async function saveApplication() {
     if (!STATE.selectedSlot) return;
 

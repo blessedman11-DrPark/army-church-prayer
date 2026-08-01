@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - Google Apps Script (GAS) 초고속 백엔드 API
- * 자유시간(오전 05~09, 오후 19~22) 다줄 자유작성 지원 12개 행 구조
+ * 자유시간 라벨 수정: (~ 09:00), (19:00 ~)
  */
 
 function createJsonResponse(data) {
@@ -136,7 +136,7 @@ function doPost(e) {
     if (action === 'update') {
       var sheetName = postData.sheetName;
       var dayIndex = parseInt(postData.dayIndex);
-      var timeIndex = parseInt(postData.timeIndex); // 0(오전자유), 1~10(일반10개), 11(오후자유)
+      var timeIndex = parseInt(postData.timeIndex);
       var slotIndex = parseInt(postData.slotIndex);
       var name = (postData.name || "").toString();
       
@@ -163,18 +163,18 @@ function doPost(e) {
   }
 }
 
-// 12개 행 추출 (0:오전자유시간, 1~10:일반시간, 11:오후자유시간)
+// 12개 행 추출 (자유시간 라벨: ~ 09:00 / 19:00 ~)
 function getSheetData(sheet) {
   var range = sheet.getRange(2, 1, 12, 15);
   var values = range.getValues();
   
   var result = [];
   var timeLabels = [
-    "(자유시간) 05:00 ~ 09:00",
+    "(자유시간) ~ 09:00",
     "09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00", 
     "13:00 ~ 14:00", "14:00 ~ 15:00", "15:00 ~ 16:00", "16:00 ~ 17:00", 
     "17:00 ~ 18:00", "18:00 ~ 19:00", 
-    "(자유시간) 19:00 ~ 22:00"
+    "(자유시간) 19:00 ~"
   ];
   
   for (var t = 0; t < 12; t++) {
@@ -276,11 +276,11 @@ function setupSheetFormat(sheet, mondayDate) {
     .setHorizontalAlignment("center");
     
   var timeLabels = [
-    ["(자유시간) 05:00 ~ 09:00"], 
+    ["(자유시간) ~ 09:00"], 
     ["09:00 ~ 10:00"], ["10:00 ~ 11:00"], ["11:00 ~ 12:00"], ["12:00 ~ 13:00"], 
     ["13:00 ~ 14:00"], ["14:00 ~ 15:00"], ["15:00 ~ 16:00"], ["16:00 ~ 17:00"], 
     ["17:00 ~ 18:00"], ["18:00 ~ 19:00"], 
-    ["(자유시간) 19:00 ~ 22:00"]
+    ["(자유시간) 19:00 ~"]
   ];
   
   sheet.getRange(2, 1, 12, 1).setValues(timeLabels);
