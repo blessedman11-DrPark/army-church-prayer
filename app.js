@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 새로고침/최신화 시 구글 시트의 가장 최근(마지막) 생성 시트로 자동 전환 및 표시
+ * 모바일 편의성 극대화: 양쪽 끝(왼쪽/오른쪽) 모두 시간열(Time Column) 렌더링
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- 상태 관리 ---
   const STATE = {
     apiUrl: DEFAULT_API_URL,
-    currentSheet: null, // 최초 및 최신화 시 null로 설정하여 구글 시트의 가장 마지막 시트를 자동 수신
+    currentSheet: null,
     startDate: getTodayDateStr(),
     sheets: [],
     data: [],
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function init() {
     setupEventListeners();
-    fetchData(true, true); // 🌟 최초 진입 시 가장 마지막 시트 강제 수신
+    fetchData(true, true);
   }
 
   function getTodayDateStr() {
@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
-  // 🌟 당일 날짜 기준 "다음 주 월요일" YYYY-MM-DD 구하기
   function getNextMondayDateStr() {
     const today = new Date();
     const day = today.getDay();
@@ -104,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnPrevWeek.addEventListener('click', () => navigateWeek(-1));
     btnNextWeek.addEventListener('click', () => navigateWeek(1));
 
-    // 🔄 최신화 클릭 시 구글 시트의 가장 최근(마지막) 시트 강제 수신
     btnRefresh.addEventListener('click', () => {
       fetchData(true, true);
     });
@@ -212,7 +210,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
-  // ⚡ 초고속 데이터 로드 (fetchLatestSheet가 true이면 가장 마지막에 생성된 최신 시트로 자동 전환)
   async function fetchData(forceRefresh = false, fetchLatestSheet = false) {
     const targetSheetName = fetchLatestSheet ? '' : (STATE.currentSheet || '');
     const cacheKey = targetSheetName;
@@ -239,7 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.sheets && result.sheets.length > 0) {
           STATE.sheets = result.sheets;
         }
-        // 백엔드가 돌려준 가장 최근 시트(맨 마지막 시트) 이름으로 currentSheet 설정
         if (result.currentSheet) {
           STATE.currentSheet = result.currentSheet;
         }
@@ -284,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- 타임테이블 렌더링 (양쪽 끝 시간열 보장) ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -299,19 +296,30 @@ document.addEventListener('DOMContentLoaded', () => {
         tr.className = 'free-time-integrated-row';
       }
 
-      const tdTime = document.createElement('td');
-      tdTime.className = 'time-cell';
       const rawTimeStr = slotData.time || TIME_LABELS[timeIdx];
+
+      // 1. 왼쪽 시간 셀 생성
+      const tdTimeLeft = document.createElement('td');
+      tdTimeLeft.className = 'time-cell time-cell-left';
+
+      // 2. 오른쪽 시간 셀 생성 (모바일 오른쪽 스크롤 시 직관적 확인 지원)
+      const tdTimeRight = document.createElement('td');
+      tdTimeRight.className = 'time-cell time-cell-right';
 
       if (rawTimeStr.includes('(자유시간)')) {
         const cleanTime = rawTimeStr.replace('(자유시간)', '').trim();
-        tdTime.innerHTML = `<span class="free-time-badge">자유시간</span><div style="margin-top: 3px; font-weight: 700;">${cleanTime}</div>`;
+        const freeHtml = `<span class="free-time-badge">자유시간</span><div style="margin-top: 3px; font-weight: 700;">${cleanTime}</div>`;
+        tdTimeLeft.innerHTML = freeHtml;
+        tdTimeRight.innerHTML = freeHtml;
       } else {
-        tdTime.textContent = rawTimeStr;
+        tdTimeLeft.textContent = rawTimeStr;
+        tdTimeRight.textContent = rawTimeStr;
       }
 
-      tr.appendChild(tdTime);
+      // 왼쪽 시간 셀 삽입
+      tr.appendChild(tdTimeLeft);
 
+      // 월~일 7개 요일 슬롯 셀 삽입
       for (let dayIdx = 0; dayIdx < 7; dayIdx++) {
         const dayData = slotData.days[dayIdx] || { slot1: '', slot2: '' };
         const tdDay = document.createElement('td');
@@ -333,6 +341,9 @@ document.addEventListener('DOMContentLoaded', () => {
         tdDay.appendChild(slotWrapper);
         tr.appendChild(tdDay);
       }
+
+      // 🌟 오른쪽 시간 셀 삽입!
+      tr.appendChild(tdTimeRight);
 
       timetableBody.appendChild(tr);
     });
