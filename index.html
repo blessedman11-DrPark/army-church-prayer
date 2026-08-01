@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>육군본부교회 중보기도 출석표</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    <!-- 메인 헤더 섹션 (한 줄 타이틀 및 주차 선택 통합) -->
+    <header class="header-section">
+      <div class="header-title-container">
+        <h1 class="header-title">
+          <span class="church-name">육군본부교회</span>
+          <span class="week-control-inline">
+            <button id="btnPrevWeek" class="btn btn-icon-sm" title="이전 주차">&lt;</button>
+            <select id="weekSelect" class="week-select-inline">
+              <option value="8월 1주차">8월 1주차</option>
+            </select>
+            <button id="btnNextWeek" class="btn btn-icon-sm" title="다음 주차">&gt;</button>
+          </span>
+          <span class="title-text">중보기도 출석표</span>
+        </h1>
+
+        <div class="action-btn-group">
+          <button id="btnCreateWeek" class="btn btn-accent btn-header-action">
+            <span>+ 새로운 주간 만들기</span>
+          </button>
+          <button id="btnDeleteWeek" class="btn btn-danger-sm btn-header-action" title="현재 주간 삭제">
+            <span>🗑️ 주간 삭제</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 범례 및 안내 (높이 축소 슬림 디자인) -->
+    <div class="guide-card">
+      <div class="guide-text">
+        💡 <strong>신청 방법:</strong> 비어있는 란을 클릭하여 이름을 등록해 주세요. 공란 저장 시 빈 칸이 됩니다.
+      </div>
+      <div class="legend-group">
+        <div class="legend-item">
+          <div class="legend-box empty"></div>
+          <span>신청 가능</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-box filled"></div>
+          <span>신청 완료</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 중보기도 타임테이블 표 -->
+    <div class="timetable-container" style="position: relative;">
+      <!-- 로딩 표시 -->
+      <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">구글 시트 데이터를 불러오는 중...</div>
+      </div>
+
+      <table class="timetable">
+        <thead>
+          <tr>
+            <th>시간 \ 요일</th>
+            <th class="col-day-0">
+              <div id="thDay0" class="day-title">월요일</div>
+              <div class="slot-sub">신청자1 | 신청자2</div>
+            </th>
+            <th class="col-day-1">
+              <div id="thDay1" class="day-title">화요일</div>
+              <div class="slot-sub">신청자1 | 신청자2</div>
+            </th>
+            <th class="col-day-2">
+              <div id="thDay2" class="day-title">수요일</div>
+              <div class="slot-sub">신청자1 | 신청자2</div>
+            </th>
+            <th class="col-day-3">
+              <div id="thDay3" class="day-title">목요일</div>
+              <div class="slot-sub">신청자1 | 신청자2</div>
+            </th>
+            <th class="col-day-4">
+              <div id="thDay4" class="day-title">금요일</div>
+              <div class="slot-sub">신청자1 | 신청자2</div>
+            </th>
+            <th class="col-day-5">
+              <div id="thDay5" class="day-title">토요일</div>
+              <div class="slot-sub">신청자1 | 신청자2</div>
+            </th>
+            <th class="col-day-6">
+              <div id="thDay6" class="day-title">일요일</div>
+              <div class="slot-sub">신청자1 | 신청자2</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody id="timetableBody">
+          <!-- JS에서 동적으로 15개 타임 슬롯 행 생성 -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 중보기도자 임명 카드 -->
+    <div class="appointment-card">
+      <p class="appoint-title">이와같이 중보기도자를 임명합니다.</p>
+      <p class="pastor-name">담임목사 강 일 주</p>
+      <p class="contact-info">※ 기타문의 : 주은실 (010-5579-0895) / 이선향(010-3321-3154)</p>
+      <p class="notice-red">※ 오전, 오후자유시간은 본인이 기도할 시간을 적어 주세요~^^</p>
+    </div>
+
+    <!-- 구글 시트 연동 상태 박스 (최소화) -->
+    <div class="status-bar-minimal">
+      <span id="statusDot" class="status-dot disconnected" title="연동 상태"></span>
+      <span id="statusText" class="status-text-muted">연동: 오프라인 모드</span>
+      <button id="btnApiSettings" class="btn-text-link">⚙️ 연동 설정</button>
+    </div>
+
+    <footer class="footer">
+      <p>© 육군본부교회 중보기도 사역팀 | 주간 중보기도 신청 시스템</p>
+    </footer>
+  </div>
+
+  <!-- 1. 중보기도 신청 / 수정 모달 -->
+  <div id="applyModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">중보기도 신청 / 수정</h3>
+        <button class="modal-close" class="btnCloseModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-box">
+          <div id="modalSlotInfo"><strong>8월 1주차 월요일 07:00 ~ 08:00 (신청자 1)</strong></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="inputName">신청자 성함 (이름)</label>
+          <input type="text" id="inputName" class="form-input" placeholder="예: 홍길동 (또는 빈 칸으로 삭제)" autofocus>
+          <div class="form-hint">* 이름을 지우고(공란) 저장하면 빈 칸으로 처리됩니다.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelApply" class="btn btn-secondary">취소</button>
+        <button id="btnSaveApply" class="btn btn-primary">저장하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. 새로운 주간 만들기 모달 (관리자 암호 및 날짜 입력) -->
+  <div id="createWeekModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">🔒 새로운 주간 만들기 (관리자)</h3>
+        <button class="modal-close" class="btnCloseModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="inputAdminPassword">관리자 암호</label>
+          <input type="password" id="inputAdminPassword" class="form-input" placeholder="암호를 입력하세요">
+          <div class="form-hint">* 새 주간 생성을 위한 암호를 입력해 주세요.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="inputNewWeekName">새 주차 이름</label>
+          <input type="text" id="inputNewWeekName" class="form-input" placeholder="예: 8월 2주차">
+          <div class="form-hint">* 생성할 주차 이름 (예: 8월 2주차)</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="inputMondayDate">해당 주간의 월요일 날짜</label>
+          <input type="date" id="inputMondayDate" class="form-input">
+          <div class="form-hint">* 기본으로 오늘 날짜가 적용되며, 필요 시 해당 주 월요일 날짜로 변경하세요.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelCreateWeek" class="btn btn-secondary">취소</button>
+        <button id="btnSaveCreateWeek" class="btn btn-accent">새 주간 생성</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 주간 삭제 모달 (관리자 암호 필요) -->
+  <div id="deleteWeekModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">🗑️ 주간 삭제 (관리자)</h3>
+        <button class="modal-close" class="btnCloseModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="info-box" style="background: #fff1f2; border: 1px solid #fecdd3; color: #9f1239;">
+          ⚠️ 삭제할 주간: <strong id="deleteSheetTargetName">8월 1주차</strong><br>
+          * 주간을 삭제하면 해당 구글 시트 탭이 완전하게 삭제됩니다.
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="inputDeleteAdminPassword">관리자 암호</label>
+          <input type="password" id="inputDeleteAdminPassword" class="form-input" placeholder="관리자 암호를 입력하세요">
+          <div class="form-hint">* 주간 삭제를 위해 관리자 암호를 입력하세요.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnCancelDeleteWeek" class="btn btn-secondary">취소</button>
+        <button id="btnConfirmDeleteWeek" class="btn btn-danger">주간 삭제</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. 구글 시트 API 연동 설정 모달 -->
+  <div id="apiSettingsModal" class="modal-backdrop">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">⚙️ 구글 시트 연동 설정</h3>
+        <button class="modal-close" class="btnCloseModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="inputApiUrl">Google Apps Script 웹 앱 URL</label>
+          <input type="url" id="inputApiUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
+          <div class="form-hint">* 구글 시트 [확장 프로그램] -> [Apps Script] 배포 후 생성된 URL을 입력해 주세요.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnTestApi" class="btn btn-secondary">연동 테스트</button>
+        <button id="btnSaveApi" class="btn btn-primary">저장 및 연결</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
