@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 자유시간 그룹화 시각적 테두리(Group Border) 레이아웃 지원
+ * 자유시간(오전 05~09, 오후 19~22) 다줄 자유 작성(4줄) 및 12개 통합 행 렌더링
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,12 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const DATA_CACHE = {};
 
   const TIME_LABELS = [
-    "(자유시간) 05:00 ~ 06:00", "(자유시간) 06:00 ~ 07:00",
-    "(자유시간) 07:00 ~ 08:00", "(자유시간) 08:00 ~ 09:00",
+    "(자유시간) 05:00 ~ 09:00",
     "09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00",
     "13:00 ~ 14:00", "14:00 ~ 15:00", "15:00 ~ 16:00", "16:00 ~ 17:00",
     "17:00 ~ 18:00", "18:00 ~ 19:00",
-    "(자유시간) 19:00 ~ 20:00", "(자유시간) 20:00 ~ 21:00", "(자유시간) 21:00 ~ 22:00"
+    "(자유시간) 19:00 ~ 22:00"
   ];
 
   const BASE_DAY_NAMES = ["월", "화", "수", "목", "금", "토", "일"];
@@ -52,7 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // 모달 참조
   const applyModal = document.getElementById('applyModal');
   const modalSlotInfo = document.getElementById('modalSlotInfo');
+  const groupNormalInput = document.getElementById('groupNormalInput');
   const inputName = document.getElementById('inputName');
+  const groupFreeInput = document.getElementById('groupFreeInput');
+  const inputFreeText = document.getElementById('inputFreeText');
+
   const btnSaveApply = document.getElementById('btnSaveApply');
   const btnCancelApply = document.getElementById('btnCancelApply');
 
@@ -214,16 +217,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function generateDemoData() {
     const demo = [];
-    for (let t = 0; t < 17; t++) {
+    for (let t = 0; t < 12; t++) {
       const days = [];
+      const isFreeTime = (t === 0 || t === 11);
       for (let d = 0; d < 7; d++) {
         days.push({
           dayIndex: d,
-          slot1: (t === 2 && d === 0) ? '홍길동' : ((t === 3 && d === 1) ? '이은혜' : ''),
-          slot2: (t === 2 && d === 0) ? '김기도' : ''
+          slot1: isFreeTime ? (d === 0 ? '05:00 홍길동\n07:00 백두산' : '') : (d === 0 ? '홍길동' : ''),
+          slot2: isFreeTime ? '' : (d === 0 ? '김기도' : '')
         });
       }
-      demo.push({ time: TIME_LABELS[t], days });
+      demo.push({ time: TIME_LABELS[t], isFreeTime, days });
     }
     return demo;
   }
@@ -309,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 자유시간 그룹 테두리 구분 클래스 부여 렌더링 ---
+  // --- 타임테이블 렌더링 (자유시간 통합 다줄 작성 4줄 지원) ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -319,14 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     STATE.data.forEach((slotData, timeIdx) => {
       const tr = document.createElement('tr');
+      const isFreeTime = (timeIdx === 0 || timeIdx === 11 || slotData.isFreeTime);
 
-      // 자유시간 그룹 구분을 위한 클래스 지정 (오전: 0~3, 오후: 14~16)
-      if (timeIdx === 0) tr.className = 'free-group-start';
-      else if (timeIdx === 1 || timeIdx === 2) tr.className = 'free-group-mid';
-      else if (timeIdx === 3) tr.className = 'free-group-end';
-      else if (timeIdx === 14) tr.className = 'free-group-start';
-      else if (timeIdx === 15) tr.className = 'free-group-mid';
-      else if (timeIdx === 16) tr.className = 'free-group-end';
+      if (isFreeTime) {
+        tr.className = 'free-time-integrated-row';
+      }
 
       const tdTime = document.createElement('td');
       tdTime.className = 'time-cell';
@@ -349,11 +350,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const slotWrapper = document.createElement('div');
         slotWrapper.className = 'slot-wrapper';
 
-        const btnSlot1 = createSlotButton(dayData.slot1, dayIdx, timeIdx, 0);
-        const btnSlot2 = createSlotButton(dayData.slot2, dayIdx, timeIdx, 1);
+        if (isFreeTime) {
+          // 자유시간: 4줄 다줄 자유 입력 1개 통합 메모 박스 버튼
+          const btnFree = createFreeSlotButton(dayData.slot1, dayIdx, timeIdx);
+          slotWrapper.appendChild(btnFree);
+        } else {
+          // 일반 시간: 신청자1 / 신청자2 버튼 2개
+          const btnSlot1 = createSlotButton(dayData.slot1, dayIdx, timeIdx, 0);
+          const btnSlot2 = createSlotButton(dayData.slot2, dayIdx, timeIdx, 1);
+          slotWrapper.appendChild(btnSlot1);
+          slotWrapper.appendChild(btnSlot2);
+        }
 
-        slotWrapper.appendChild(btnSlot1);
-        slotWrapper.appendChild(btnSlot2);
         tdDay.appendChild(slotWrapper);
         tr.appendChild(tdDay);
       }
@@ -371,37 +379,64 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.textContent = isFilled ? name : '';
 
     btn.addEventListener('click', () => {
-      openApplyModal(dayIndex, timeIndex, slotIndex, isFilled ? name : '');
+      openApplyModal(dayIndex, timeIndex, slotIndex, isFilled ? name : '', false);
     });
 
     return btn;
   }
 
-  function openApplyModal(dayIndex, timeIndex, slotIndex, currentName) {
-    STATE.selectedSlot = { dayIndex, timeIndex, slotIndex, currentName };
+  function createFreeSlotButton(text, dayIndex, timeIndex) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    const isFilled = text && text.trim().length > 0;
+
+    btn.className = `free-slot-btn ${isFilled ? 'filled' : ''}`;
+    btn.innerText = isFilled ? text : ''; // 줄바꿈(\n) 포함 텍스트 표시
+
+    btn.addEventListener('click', () => {
+      openApplyModal(dayIndex, timeIndex, 0, isFilled ? text : '', true);
+    });
+
+    return btn;
+  }
+
+  function openApplyModal(dayIndex, timeIndex, slotIndex, currentText, isFreeTime) {
+    STATE.selectedSlot = { dayIndex, timeIndex, slotIndex, currentText, isFreeTime };
 
     const dateLabels = calculateWeekHeaderDates(STATE.startDate);
     const dayLabel = dateLabels[dayIndex] || BASE_DAY_NAMES[dayIndex];
     const timeLabel = TIME_LABELS[timeIndex];
-    const slotLabel = `신청자 ${slotIndex + 1}`;
 
-    modalSlotInfo.innerHTML = `<strong>${STATE.currentSheet} ${dayLabel} ${timeLabel} (${slotLabel})</strong>`;
-    inputName.value = currentName;
-    openModal(applyModal);
-    setTimeout(() => inputName.focus(), 150);
+    if (isFreeTime) {
+      modalSlotInfo.innerHTML = `<strong>${STATE.currentSheet} ${dayLabel} ${timeLabel} (자유 작성)</strong>`;
+      groupNormalInput.style.display = 'none';
+      groupFreeInput.style.display = 'block';
+      inputFreeText.value = currentText;
+      openModal(applyModal);
+      setTimeout(() => inputFreeText.focus(), 150);
+    } else {
+      const slotLabel = `신청자 ${slotIndex + 1}`;
+      modalSlotInfo.innerHTML = `<strong>${STATE.currentSheet} ${dayLabel} ${timeLabel} (${slotLabel})</strong>`;
+      groupFreeInput.style.display = 'none';
+      groupNormalInput.style.display = 'block';
+      inputName.value = currentText;
+      openModal(applyModal);
+      setTimeout(() => inputName.focus(), 150);
+    }
   }
 
+  // ⚡ 저장 함수 (자유시간 다줄 텍스트 저장 지원)
   async function saveApplication() {
     if (!STATE.selectedSlot) return;
 
-    const { dayIndex, timeIndex, slotIndex } = STATE.selectedSlot;
-    const name = inputName.value.trim();
+    const { dayIndex, timeIndex, slotIndex, isFreeTime } = STATE.selectedSlot;
+    const val = isFreeTime ? inputFreeText.value.trim() : inputName.value.trim();
 
     closeModal(applyModal);
 
     if (STATE.data[timeIndex] && STATE.data[timeIndex].days[dayIndex]) {
-      if (slotIndex === 0) STATE.data[timeIndex].days[dayIndex].slot1 = name;
-      else STATE.data[timeIndex].days[dayIndex].slot2 = name;
+      if (isFreeTime || slotIndex === 0) STATE.data[timeIndex].days[dayIndex].slot1 = val;
+      else STATE.data[timeIndex].days[dayIndex].slot2 = val;
     }
     
     if (DATA_CACHE[STATE.currentSheet]) {
@@ -416,8 +451,8 @@ document.addEventListener('DOMContentLoaded', () => {
           sheetName: STATE.currentSheet,
           dayIndex,
           timeIndex,
-          slotIndex,
-          name
+          slotIndex: isFreeTime ? 0 : slotIndex,
+          name: val
         };
 
         fetch(STATE.apiUrl, {

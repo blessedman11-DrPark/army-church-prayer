@@ -1,21 +1,18 @@
 /**
  * 육군본부교회 중보기도 출석표 - Google Apps Script (GAS) 초고속 백엔드 API
- * 05:00 ~ 22:00 총 17개 타임슬롯 지원 (새벽 05시, 06시 추가)
+ * 자유시간(오전 05~09, 오후 19~22) 다줄 자유작성 지원 12개 행 구조
  */
 
-// CORS 헤더를 포함한 JSON 응답 생성 함수
 function createJsonResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// GET 요청 처리 (최고속 핀포인트 전용 조회)
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var action = e.parameter.action || 'getData';
     
-    // 1. 시트 목록만 빠르게 응답
     if (action === 'getSheets') {
       var sheets = ss.getSheets();
       var sheetNames = [];
@@ -25,7 +22,6 @@ function doGet(e) {
       return createJsonResponse({ status: 'success', sheets: sheetNames });
     }
     
-    // 2. 지정 주차 시트 핀포인트 초고속 읽기
     var sheetName = e.parameter.sheetName;
     var targetSheet = sheetName ? ss.getSheetByName(sheetName) : null;
     
@@ -38,7 +34,6 @@ function doGet(e) {
       }
     }
     
-    // 포맷 세팅 미비 시 자동 설정
     if (targetSheet.getLastRow() < 2) {
       setupSheetFormat(targetSheet, getStartDateForSheet(targetSheet));
     }
@@ -65,7 +60,6 @@ function doGet(e) {
   }
 }
 
-// POST 요청 처리
 function doPost(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -77,7 +71,6 @@ function doPost(e) {
     
     var action = postData.action;
     
-    // 1. 새로운 주간 시트 생성
     if (action === 'createSheet') {
       var newSheetName = postData.sheetName;
       var mondayDate = postData.mondayDate;
@@ -108,7 +101,6 @@ function doPost(e) {
       });
     }
     
-    // 2. 주간 시트 삭제
     if (action === 'deleteSheet') {
       var deleteTargetName = postData.sheetName;
       var sheets = ss.getSheets();
@@ -141,13 +133,12 @@ function doPost(e) {
       });
     }
     
-    // 3. 셀 데이터 핀포인트 1건 업데이트 (17개 타임슬롯 지원)
     if (action === 'update') {
       var sheetName = postData.sheetName;
       var dayIndex = parseInt(postData.dayIndex);
-      var timeIndex = parseInt(postData.timeIndex); // 0(05:00) ~ 16(21:00)
+      var timeIndex = parseInt(postData.timeIndex); // 0(오전자유), 1~10(일반10개), 11(오후자유)
       var slotIndex = parseInt(postData.slotIndex);
-      var name = (postData.name || "").trim();
+      var name = (postData.name || "").toString();
       
       var sheet = ss.getSheetByName(sheetName);
       if (!sheet) {
@@ -172,25 +163,26 @@ function doPost(e) {
   }
 }
 
-// 17시간(05:00~22:00) x 7일 데이터 일괄 추출 함수
+// 12개 행 추출 (0:오전자유시간, 1~10:일반시간, 11:오후자유시간)
 function getSheetData(sheet) {
-  var range = sheet.getRange(2, 1, 17, 15);
+  var range = sheet.getRange(2, 1, 12, 15);
   var values = range.getValues();
   
   var result = [];
   var timeLabels = [
-    "(자유시간) 05:00 ~ 06:00", "(자유시간) 06:00 ~ 07:00",
-    "(자유시간) 07:00 ~ 08:00", "(자유시간) 08:00 ~ 09:00", 
+    "(자유시간) 05:00 ~ 09:00",
     "09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00", 
     "13:00 ~ 14:00", "14:00 ~ 15:00", "15:00 ~ 16:00", "16:00 ~ 17:00", 
     "17:00 ~ 18:00", "18:00 ~ 19:00", 
-    "(자유시간) 19:00 ~ 20:00", "(자유시간) 20:00 ~ 21:00", "(자유시간) 21:00 ~ 22:00"
+    "(자유시간) 19:00 ~ 22:00"
   ];
   
-  for (var t = 0; t < 17; t++) {
+  for (var t = 0; t < 12; t++) {
     var rowValues = values[t] || [];
+    var isFreeTime = (t === 0 || t === 11);
     var timeSlot = {
       time: timeLabels[t],
+      isFreeTime: isFreeTime,
       days: []
     };
     
@@ -200,8 +192,8 @@ function getSheetData(sheet) {
       
       timeSlot.days.push({
         dayIndex: d,
-        slot1: (rowValues[col1] || "").toString().trim(),
-        slot2: (rowValues[col2] || "").toString().trim()
+        slot1: (rowValues[col1] || "").toString(),
+        slot2: (rowValues[col2] || "").toString()
       });
     }
     
@@ -211,13 +203,8 @@ function getSheetData(sheet) {
   return result;
 }
 
-// 월요일 시작 날짜 추출 함수 (17개 행 아래 A19 또는 A17 지원)
 function getStartDateForSheet(sheet) {
-  var storedDate = sheet.getRange(19, 1).getValue();
-  if (!storedDate || !storedDate.toString().match(/^\d{4}-\d{2}-\d{2}$/)) {
-    storedDate = sheet.getRange(17, 1).getValue();
-  }
-  
+  var storedDate = sheet.getRange(14, 1).getValue();
   if (storedDate && storedDate.toString().match(/^\d{4}-\d{2}-\d{2}$/)) {
     return storedDate.toString();
   }
@@ -254,7 +241,6 @@ function getStartDateForSheet(sheet) {
   return y + '-' + m + '-' + d;
 }
 
-// 시트 표 포맷팅 적용 함수 (05시~22시 17개 슬롯)
 function setupSheetFormat(sheet, mondayDate) {
   if (!mondayDate || !mondayDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
     mondayDate = getStartDateForSheet(sheet);
@@ -290,27 +276,25 @@ function setupSheetFormat(sheet, mondayDate) {
     .setHorizontalAlignment("center");
     
   var timeLabels = [
-    ["(자유시간) 05:00 ~ 06:00"], ["(자유시간) 06:00 ~ 07:00"],
-    ["(자유시간) 07:00 ~ 08:00"], ["(자유시간) 08:00 ~ 09:00"], 
+    ["(자유시간) 05:00 ~ 09:00"], 
     ["09:00 ~ 10:00"], ["10:00 ~ 11:00"], ["11:00 ~ 12:00"], ["12:00 ~ 13:00"], 
     ["13:00 ~ 14:00"], ["14:00 ~ 15:00"], ["15:00 ~ 16:00"], ["16:00 ~ 17:00"], 
     ["17:00 ~ 18:00"], ["18:00 ~ 19:00"], 
-    ["(자유시간) 19:00 ~ 20:00"], ["(자유시간) 20:00 ~ 21:00"], ["(자유시간) 21:00 ~ 22:00"]
+    ["(자유시간) 19:00 ~ 22:00"]
   ];
   
-  sheet.getRange(2, 1, 17, 1).setValues(timeLabels);
-  sheet.getRange(2, 1, 17, 1)
+  sheet.getRange(2, 1, 12, 1).setValues(timeLabels);
+  sheet.getRange(2, 1, 12, 1)
     .setBackground("#f8fafc")
     .setFontWeight("bold")
     .setHorizontalAlignment("center");
     
-  sheet.getRange(1, 1, 18, 15).setBorder(true, true, true, true, true, true);
-  sheet.getRange(2, 2, 17, 14).setHorizontalAlignment("center");
+  sheet.getRange(1, 1, 13, 15).setBorder(true, true, true, true, true, true);
+  sheet.getRange(2, 2, 12, 14).setHorizontalAlignment("center");
   
-  sheet.getRange(19, 1).setValue(mondayDate);
+  sheet.getRange(14, 1).setValue(mondayDate);
 }
 
-// 새 주차 시트 생성 함수
 function createInitialSheet(ss, sheetName, mondayDate) {
   var sheet = ss.insertSheet(sheetName);
   setupSheetFormat(sheet, mondayDate);

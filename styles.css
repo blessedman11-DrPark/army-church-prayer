@@ -346,35 +346,12 @@ body {
   letter-spacing: -0.3px;
 }
 
-/* 🌟 자유시간 그룹 테두리 스타일 (이미지 요청 기반 옅은 하늘색 박스 그룹핑) */
-.free-group-start td {
-  border-top: 2.5px solid #0284c7 !important;
-}
-.free-group-start td:first-child {
-  border-left: 2.5px solid #0284c7 !important;
-}
-.free-group-start td:last-child {
-  border-right: 2.5px solid #0284c7 !important;
+/* 자유시간 통합 행 스타일 (스카이 블루 시각 강조) */
+.free-time-integrated-row td {
+  background-color: #f0f9ff !important;
 }
 
-.free-group-mid td:first-child {
-  border-left: 2.5px solid #0284c7 !important;
-}
-.free-group-mid td:last-child {
-  border-right: 2.5px solid #0284c7 !important;
-}
-
-.free-group-end td {
-  border-bottom: 2.5px solid #0284c7 !important;
-}
-.free-group-end td:first-child {
-  border-left: 2.5px solid #0284c7 !important;
-}
-.free-group-end td:last-child {
-  border-right: 2.5px solid #0284c7 !important;
-}
-
-/* 기도 신청 슬롯 버튼 */
+/* 기도 신청 슬롯 버튼 (일반 시간용) */
 .slot-wrapper {
   display: flex;
   gap: 4px;
@@ -420,6 +397,40 @@ body {
 .slot-btn.filled:hover {
   background: #f1f5f9 !important;
   border-color: #94a3b8 !important;
+}
+
+/* 🌟 자유시간 전용 4줄 다줄 자유 입력 메모 박스 버튼 */
+.free-slot-btn {
+  width: 100%;
+  min-height: 88px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid #0284c7 !important;
+  background: #ffffff !important;
+  color: #0369a1;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  white-space: pre-line !important; /* 줄바꿈(\n) 보존 서식 */
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.free-slot-btn:hover {
+  background: #e0f2fe !important;
+  border-color: #0369a1 !important;
+}
+
+.free-slot-btn.filled {
+  background: #ffffff !important;
+  border: 1.5px solid #0284c7 !important;
+  color: #0c4a6e !important;
+  font-weight: 600 !important;
 }
 
 /* 임명 안내 카드 */
