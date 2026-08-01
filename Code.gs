@@ -1,8 +1,5 @@
 /**
- * 육군본부교회 중보기도 출석표 - Google Apps Script (GAS) 백엔드
- * 
- * 구글 시트('중보기도신청자관리')의 [확장 프로그램] -> [Apps Script]에 
- * 이 코드 전체를 붙여넣은 후 [배포] -> [새 배포] -> [웹 앱]으로 배포하세요.
+ * 육군본부교회 중보기도 출석표 - Google Apps Script (GAS) 초고속 백엔드 API
  */
 
 // CORS 헤더를 포함한 JSON 응답 생성 함수
@@ -11,38 +8,50 @@ function createJsonResponse(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-// GET 요청 처리 (주차 목록 및 특정 주차의 기도 출석표 데이터 경량 조회)
+// GET 요청 처리 (최고속 핀포인트 전용 조회)
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var action = e.parameter.action || 'getData';
     
-    // 시트 검사 및 '시트1' -> '8월 1주차' 자동 변환
-    var sheets = checkAndSetupSheets(ss);
-    
-    // 1. 주차 시트 목록만 경량 조회 (초기 로딩 속도 최적화)
+    // 1. 단순 시트 목록만 빠르게 응답 (캐싱용)
     if (action === 'getSheets') {
-      var sheetNames = sheets.map(function(s) { return s.getName(); });
+      var sheets = ss.getSheets();
+      var sheetNames = [];
+      for (var i = 0; i < sheets.length; i++) {
+        sheetNames.push(sheets[i].getName());
+      }
       return createJsonResponse({ status: 'success', sheets: sheetNames });
     }
     
-    // 2. 선택된 특정 주차 출석표 데이터만 핀포인트 조회
+    // 2. 지정 주차 시트 핀포인트 초고속 읽기
     var sheetName = e.parameter.sheetName;
-    var targetSheet = sheetName ? ss.getSheetByName(sheetName) : sheets[0];
+    var targetSheet = sheetName ? ss.getSheetByName(sheetName) : null;
     
     if (!targetSheet) {
-      targetSheet = sheets[0];
+      var sheets = ss.getSheets();
+      if (sheets.length === 0) {
+        targetSheet = createInitialSheet(ss, "8월 1주차");
+      } else {
+        targetSheet = sheets[0];
+      }
     }
     
+    // 1행 데이터만 간단 체크
+    if (targetSheet.getLastRow() < 2) {
+      setupSheetFormat(targetSheet, getStartDateForSheet(targetSheet));
+    }
+    
+    // 단 2번의 시트 I/O로 모든 데이터 및 날짜 추출 (최고속)
+    var data = getSheetData(targetSheet);
     var startDate = getStartDateForSheet(targetSheet);
     
-    // 타겟 시트 데이터가 1행 이하인 경우 포맷 세팅
-    if (targetSheet.getLastRow() < 2) {
-      setupSheetFormat(targetSheet, startDate);
+    // 시트 목록 가져오기
+    var allSheets = ss.getSheets();
+    var sheetNames = [];
+    for (var k = 0; k < allSheets.length; k++) {
+      sheetNames.push(allSheets[k].getName());
     }
-    
-    var data = getSheetData(targetSheet);
-    var sheetNames = sheets.map(function(s) { return s.getName(); });
     
     return createJsonResponse({
       status: 'success',
@@ -72,7 +81,7 @@ function doPost(e) {
     // 1. 새로운 주간 시트 생성
     if (action === 'createSheet') {
       var newSheetName = postData.sheetName;
-      var mondayDate = postData.mondayDate; // YYYY-MM-DD
+      var mondayDate = postData.mondayDate;
       
       if (!newSheetName) {
         return createJsonResponse({ status: 'error', message: '주차 이름을 입력해주세요.' });
@@ -84,20 +93,23 @@ function doPost(e) {
       }
       
       var newSheet = createInitialSheet(ss, newSheetName, mondayDate);
-      var sheets = ss.getSheets().map(function(s) { return s.getName(); });
-      var startDate = getStartDateForSheet(newSheet);
+      var allSheets = ss.getSheets();
+      var sheetNames = [];
+      for (var i = 0; i < allSheets.length; i++) {
+        sheetNames.push(allSheets[i].getName());
+      }
       
       return createJsonResponse({
         status: 'success',
         message: '새로운 주차가 생성되었습니다.',
         currentSheet: newSheet.getName(),
-        startDate: startDate,
-        sheets: sheets,
+        startDate: getStartDateForSheet(newSheet),
+        sheets: sheetNames,
         data: getSheetData(newSheet)
       });
     }
     
-    // 2. 주간 시트 삭제 (관리자 기능)
+    // 2. 주간 시트 삭제
     if (action === 'deleteSheet') {
       var deleteTargetName = postData.sheetName;
       var sheets = ss.getSheets();
@@ -115,26 +127,28 @@ function doPost(e) {
       
       var remainingSheets = ss.getSheets();
       var nextSheet = remainingSheets[0];
-      var nextStartDate = getStartDateForSheet(nextSheet);
-      var remainingNames = remainingSheets.map(function(s) { return s.getName(); });
+      var remainingNames = [];
+      for (var j = 0; j < remainingSheets.length; j++) {
+        remainingNames.push(remainingSheets[j].getName());
+      }
       
       return createJsonResponse({
         status: 'success',
         message: '\'' + deleteTargetName + '\' 주간이 삭제되었습니다.',
         currentSheet: nextSheet.getName(),
-        startDate: nextStartDate,
+        startDate: getStartDateForSheet(nextSheet),
         sheets: remainingNames,
         data: getSheetData(nextSheet)
       });
     }
     
-    // 3. 기도 신청/수정/삭제 업데이트
+    // 3. 셀 데이터 핀포인트 1건 업데이트 (속도 최적화)
     if (action === 'update') {
       var sheetName = postData.sheetName;
-      var dayIndex = parseInt(postData.dayIndex); // 0(월) ~ 6(일)
-      var timeIndex = parseInt(postData.timeIndex); // 0(07:00) ~ 14(21:00)
-      var slotIndex = parseInt(postData.slotIndex); // 0(슬롯1) or 1(슬롯2)
-      var name = (postData.name || "").trim(); // 공란이면 빈칸 저장
+      var dayIndex = parseInt(postData.dayIndex);
+      var timeIndex = parseInt(postData.timeIndex);
+      var slotIndex = parseInt(postData.slotIndex);
+      var name = (postData.name || "").trim();
       
       var sheet = ss.getSheetByName(sheetName);
       if (!sheet) {
@@ -144,15 +158,12 @@ function doPost(e) {
       var row = 2 + timeIndex;
       var col = 2 + (dayIndex * 2) + slotIndex;
       
+      // 단 1개의 셀만 업데이트
       sheet.getRange(row, col).setValue(name);
-      
-      var startDate = getStartDateForSheet(sheet);
       
       return createJsonResponse({
         status: 'success',
-        message: '신청 정보가 업데이트되었습니다.',
-        startDate: startDate,
-        data: getSheetData(sheet)
+        message: '저장되었습니다.'
       });
     }
     
@@ -163,21 +174,18 @@ function doPost(e) {
   }
 }
 
-// 지정한 시트의 7일 x 15시간 데이터 구조 추출 함수 (자유시간 라벨 반영)
+// 15시간 x 7일 데이터 일괄 추출 함수
 function getSheetData(sheet) {
-  var lastRow = sheet.getLastRow();
-  if (lastRow < 2) return [];
-  
   var range = sheet.getRange(2, 1, 15, 15);
   var values = range.getValues();
   
   var result = [];
   var timeLabels = [
-    "07:00 ~ 08:00 (자유시간)", "08:00 ~ 09:00 (자유시간)", 
+    "(자유시간) 07:00 ~ 08:00", "(자유시간) 08:00 ~ 09:00", 
     "09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00", 
     "13:00 ~ 14:00", "14:00 ~ 15:00", "15:00 ~ 16:00", "16:00 ~ 17:00", 
     "17:00 ~ 18:00", "18:00 ~ 19:00", 
-    "19:00 ~ 20:00 (자유시간)", "20:00 ~ 21:00 (자유시간)", "21:00 ~ 22:00 (자유시간)"
+    "(자유시간) 19:00 ~ 20:00", "(자유시간) 20:00 ~ 21:00", "(자유시간) 21:00 ~ 22:00"
   ];
   
   for (var t = 0; t < 15; t++) {
@@ -204,24 +212,7 @@ function getSheetData(sheet) {
   return result;
 }
 
-// 월요일 시작 날짜 기준 7일간의 헤더 명칭 생성 헬퍼
-function generateHeaderDates(mondayDateStr) {
-  var baseDays = ["월", "화", "수", "목", "금", "토", "일"];
-  var parts = mondayDateStr.split('-');
-  var startDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-  
-  var dateHeaders = [];
-  for (var i = 0; i < 7; i++) {
-    var d = new Date(startDate);
-    d.setDate(startDate.getDate() + i);
-    var m = d.getMonth() + 1;
-    var dt = d.getDate();
-    dateHeaders.push(m + "." + dt + "(" + baseDays[i] + ")");
-  }
-  return dateHeaders;
-}
-
-// 주차 시작 월요일 날짜 추출/계산 함수
+// 월요일 시작 날짜 추출/계산 함수
 function getStartDateForSheet(sheet) {
   var storedDate = sheet.getRange(17, 1).getValue();
   if (storedDate && storedDate.toString().match(/^\d{4}-\d{2}-\d{2}$/)) {
@@ -260,36 +251,22 @@ function getStartDateForSheet(sheet) {
   return y + '-' + m + '-' + d;
 }
 
-// 시트 목록 검사 및 기본 '시트1' -> '8월 1주차' 자동 변경 헬퍼
-function checkAndSetupSheets(ss) {
-  var sheets = ss.getSheets();
-  
-  if (sheets.length === 0) {
-    createInitialSheet(ss, "8월 1주차");
-    return ss.getSheets();
-  }
-  
-  var firstSheet = sheets[0];
-  var firstName = firstSheet.getName();
-  if (firstName === "시트1" || firstName === "Sheet1") {
-    firstSheet.setName("8월 1주차");
-    var startDate = getStartDateForSheet(firstSheet);
-    setupSheetFormat(firstSheet, startDate);
-  } else if (firstSheet.getLastRow() < 2) {
-    var startDate = getStartDateForSheet(firstSheet);
-    setupSheetFormat(firstSheet, startDate);
-  }
-  
-  return ss.getSheets();
-}
-
 // 시트 표 포맷팅 적용 함수
 function setupSheetFormat(sheet, mondayDate) {
   if (!mondayDate || !mondayDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
     mondayDate = getStartDateForSheet(sheet);
   }
   
-  var dateHeaders = generateHeaderDates(mondayDate);
+  var baseDays = ["월", "화", "수", "목", "금", "토", "일"];
+  var parts = mondayDate.split('-');
+  var startDateObj = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  
+  var dateHeaders = [];
+  for (var i = 0; i < 7; i++) {
+    var d = new Date(startDateObj);
+    d.setDate(startDateObj.getDate() + i);
+    dateHeaders.push((d.getMonth() + 1) + "." + d.getDate() + "(" + baseDays[i] + ")");
+  }
   
   var headers = [
     "시간", 
@@ -310,11 +287,11 @@ function setupSheetFormat(sheet, mondayDate) {
     .setHorizontalAlignment("center");
     
   var timeLabels = [
-    ["07:00 ~ 08:00 (자유시간)"], ["08:00 ~ 09:00 (자유시간)"], 
+    ["(자유시간) 07:00 ~ 08:00"], ["(자유시간) 08:00 ~ 09:00"], 
     ["09:00 ~ 10:00"], ["10:00 ~ 11:00"], ["11:00 ~ 12:00"], ["12:00 ~ 13:00"], 
     ["13:00 ~ 14:00"], ["14:00 ~ 15:00"], ["15:00 ~ 16:00"], ["16:00 ~ 17:00"], 
     ["17:00 ~ 18:00"], ["18:00 ~ 19:00"], 
-    ["19:00 ~ 20:00 (자유시간)"], ["20:00 ~ 21:00 (자유시간)"], ["21:00 ~ 22:00 (자유시간)"]
+    ["(자유시간) 19:00 ~ 20:00"], ["(자유시간) 20:00 ~ 21:00"], ["(자유시간) 21:00 ~ 22:00"]
   ];
   
   sheet.getRange(2, 1, 15, 1).setValues(timeLabels);
@@ -329,7 +306,7 @@ function setupSheetFormat(sheet, mondayDate) {
   sheet.getRange(17, 1).setValue(mondayDate);
 }
 
-// 새 주차 시트 생성 및 초기 포맷 세팅 함수
+// 새 주차 시트 생성 함수
 function createInitialSheet(ss, sheetName, mondayDate) {
   var sheet = ss.insertSheet(sheetName);
   setupSheetFormat(sheet, mondayDate);

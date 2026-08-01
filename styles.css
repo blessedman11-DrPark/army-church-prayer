@@ -16,9 +16,6 @@
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
   --slot-empty: #ffffff;
   --slot-empty-border: #cbd5e1;
-  --slot-filled: #eff6ff;
-  --slot-filled-border: #93c5fd;
-  --slot-filled-text: #1e40af;
   --radius-sm: 6px;
   --radius-md: 12px;
   --radius-lg: 20px;
@@ -246,8 +243,8 @@ body {
 }
 
 .legend-box.filled {
-  background: var(--slot-filled);
-  border: 1px solid var(--slot-filled-border);
+  background: #ffffff;
+  border: 1px solid #475569;
 }
 
 /* 타임테이블 카드 컨테이너 */
@@ -315,14 +312,14 @@ body {
   border-bottom: none;
 }
 
-/* 선명하고 부드러운 요일별 배경 컬러 틴트 */
-.col-day-0 { background-color: #f1f5f9 !important; } /* 월: 선명한 슬레이트 */
-.col-day-1 { background-color: #e0f2fe !important; } /* 화: 선명한 스카이 블루 */
-.col-day-2 { background-color: #dcfce7 !important; } /* 수: 선명한 에메랄드 */
-.col-day-3 { background-color: #ffedd5 !important; } /* 목: 선명한 엠버/오렌지 */
-.col-day-4 { background-color: #f3e8ff !important; } /* 금: 선명한 라벤더/퍼플 */
-.col-day-5 { background-color: #ffe4e6 !important; } /* 토: 선명한 핑크 */
-.col-day-6 { background-color: #fef08a !important; } /* 일: 선명한 옐로우 */
+/* 요일별 배경 컬러 틴트 */
+.col-day-0 { background-color: #f1f5f9 !important; }
+.col-day-1 { background-color: #e0f2fe !important; }
+.col-day-2 { background-color: #dcfce7 !important; }
+.col-day-3 { background-color: #ffedd5 !important; }
+.col-day-4 { background-color: #f3e8ff !important; }
+.col-day-5 { background-color: #ffe4e6 !important; }
+.col-day-6 { background-color: #fef08a !important; }
 
 .time-cell {
   background: #f8fafc;
@@ -335,17 +332,17 @@ body {
   padding: 6px 4px !important;
 }
 
-/* 자유시간 뱃지 스타일 */
+/* 자유시간 뱃지 스타일 (옅은 푸른색 계통 적용) */
 .free-time-badge {
   display: inline-block;
   font-size: 11px;
   font-weight: 700;
-  color: #b91c1c;
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
+  color: #0369a1;        /* 딥 블루 */
+  background: #e0f2fe;   /* 옅은 스카이 블루 */
+  border: 1px solid #bae6fd;
   border-radius: 10px;
-  padding: 1px 6px;
-  margin-top: 3px;
+  padding: 1px 7px;
+  margin-bottom: 2px;
   letter-spacing: -0.3px;
 }
 
@@ -379,16 +376,17 @@ body {
   border-color: #94a3b8;
 }
 
+/* 신청 완료 시에도 배경색은 비어있는 박스와 동일하게 흰색(#ffffff)으로 통일 */
 .slot-btn.filled {
-  background: var(--slot-filled);
-  border: 1px solid var(--slot-filled-border);
-  color: var(--slot-filled-text);
-  font-weight: 700;
+  background: #ffffff !important;
+  border: 1.5px solid #475569 !important;
+  color: #0f172a !important;
+  font-weight: 700 !important;
 }
 
 .slot-btn.filled:hover {
-  background: #dbeafe;
-  border-color: #60a5fa;
+  background: #f1f5f9 !important;
+  border-color: #1e293b !important;
 }
 
 /* 임명 안내 카드 */
@@ -414,20 +412,12 @@ body {
   font-weight: 700;
   color: #0f172a;
   letter-spacing: 2px;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .contact-info {
   font-size: 13.5px;
   color: #475569;
-  margin-bottom: 6px;
-}
-
-.notice-red {
-  font-size: 14px;
-  font-weight: 700;
-  color: #b91c1c;
-  margin-top: 4px;
 }
 
 /* 구글 시트 연동 상태 박스 (최소화 디자인) */
