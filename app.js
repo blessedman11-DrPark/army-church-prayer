@@ -1,21 +1,15 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 자유시간(오전 05~09, 오후 19~22) 다줄 자유 작성(4줄) 및 12개 통합 행 렌더링
+ * 구글 앱스 스크립트 전용 직결 연동 최적화 (스마트폰/PC 100% 무설정 연동)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // 🔗 모든 사용자가 접속 즉시 연동되는 기본 구글 앱스 스크립트 배포 URL
+  // 🔗 모든 사용자가 접속 즉시 연동되는 고정 구글 앱스 스크립트 배포 URL
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwRYIJKys8MTdyk-PCM-YukyOMLXq6UuBkANIKiL7MfPSSm80skmkHPr7_Ba00lilwxsw/exec';
-
-  let activeApiUrl = localStorage.getItem('gas_api_url');
-  if (!activeApiUrl || activeApiUrl.trim() === '') {
-    activeApiUrl = DEFAULT_API_URL;
-    localStorage.setItem('gas_api_url', DEFAULT_API_URL);
-  }
 
   // --- 상태 관리 ---
   const STATE = {
-    apiUrl: activeApiUrl,
+    apiUrl: DEFAULT_API_URL, // 언제나 100% 내장 URL만 직결 사용!
     currentSheet: '8월 1주차',
     startDate: getTodayDateStr(),
     sheets: ['8월 1주차'],
@@ -42,9 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNextWeek = document.getElementById('btnNextWeek');
   const btnCreateWeek = document.getElementById('btnCreateWeek');
   const btnDeleteWeek = document.getElementById('btnDeleteWeek');
-  const btnApiSettings = document.getElementById('btnApiSettings');
-  const statusDot = document.getElementById('statusDot');
-  const statusText = document.getElementById('statusText');
   const timetableBody = document.getElementById('timetableBody');
   const loadingOverlay = document.getElementById('loadingOverlay');
 
@@ -72,17 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnConfirmDeleteWeek = document.getElementById('btnConfirmDeleteWeek');
   const btnCancelDeleteWeek = document.getElementById('btnCancelDeleteWeek');
 
-  const apiSettingsModal = document.getElementById('apiSettingsModal');
-  const inputApiUrl = document.getElementById('inputApiUrl');
-  const btnSaveApi = document.getElementById('btnSaveApi');
-  const btnTestApi = document.getElementById('btnTestApi');
-
   // --- 초기화 ---
   init();
 
   function init() {
     setupEventListeners();
-    updateStatusUI();
     fetchData();
   }
 
@@ -122,17 +107,11 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => inputDeleteAdminPassword.focus(), 150);
     });
 
-    btnApiSettings.addEventListener('click', () => {
-      inputApiUrl.value = STATE.apiUrl;
-      openModal(apiSettingsModal);
-    });
-
     document.querySelectorAll('.btnCloseModal').forEach(btn => {
       btn.addEventListener('click', () => {
         closeModal(applyModal);
         closeModal(createWeekModal);
         closeModal(deleteWeekModal);
-        closeModal(apiSettingsModal);
       });
     });
 
@@ -147,27 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnSaveCreateWeek.addEventListener('click', createNewWeek);
     btnConfirmDeleteWeek.addEventListener('click', deleteCurrentWeek);
-
-    btnSaveApi.addEventListener('click', () => {
-      const url = inputApiUrl.value.trim() || DEFAULT_API_URL;
-      STATE.apiUrl = url;
-      localStorage.setItem('gas_api_url', url);
-      closeModal(apiSettingsModal);
-      updateStatusUI();
-      fetchData(true);
-    });
-
-    btnTestApi.addEventListener('click', testApiConnection);
-  }
-
-  function updateStatusUI() {
-    if (STATE.apiUrl) {
-      statusDot.className = 'status-dot connected';
-      statusText.textContent = '연동: 연결됨';
-    } else {
-      statusDot.className = 'status-dot disconnected';
-      statusText.textContent = '연동: 오프라인 모드';
-    }
   }
 
   function navigateWeek(direction) {
@@ -232,6 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
+  // ⚡ 초고속 데이터 로드
   async function fetchData(forceRefresh = false) {
     const cacheKey = STATE.currentSheet;
 
@@ -245,19 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
       showLoading(false);
     } else {
       showLoading(true);
-    }
-
-    if (!STATE.apiUrl) {
-      setTimeout(() => {
-        STATE.data = generateDemoData();
-        STATE.startDate = getTodayDateStr();
-        DATA_CACHE[cacheKey] = { startDate: STATE.startDate, data: STATE.data };
-        renderWeekSelect();
-        updateTableHeaderDates();
-        renderTimetable();
-        showLoading(false);
-      }, 100);
-      return;
     }
 
     try {
@@ -313,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 타임테이블 렌더링 (자유시간 통합 다줄 작성 4줄 지원) ---
+  // --- 타임테이블 렌더링 ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -351,11 +297,9 @@ document.addEventListener('DOMContentLoaded', () => {
         slotWrapper.className = 'slot-wrapper';
 
         if (isFreeTime) {
-          // 자유시간: 4줄 다줄 자유 입력 1개 통합 메모 박스 버튼
           const btnFree = createFreeSlotButton(dayData.slot1, dayIdx, timeIdx);
           slotWrapper.appendChild(btnFree);
         } else {
-          // 일반 시간: 신청자1 / 신청자2 버튼 2개
           const btnSlot1 = createSlotButton(dayData.slot1, dayIdx, timeIdx, 0);
           const btnSlot2 = createSlotButton(dayData.slot2, dayIdx, timeIdx, 1);
           slotWrapper.appendChild(btnSlot1);
@@ -391,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isFilled = text && text.trim().length > 0;
 
     btn.className = `free-slot-btn ${isFilled ? 'filled' : ''}`;
-    btn.innerText = isFilled ? text : ''; // 줄바꿈(\n) 포함 텍스트 표시
+    btn.innerText = isFilled ? text : '';
 
     btn.addEventListener('click', () => {
       openApplyModal(dayIndex, timeIndex, 0, isFilled ? text : '', true);
@@ -425,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ⚡ 저장 함수 (자유시간 다줄 텍스트 저장 지원)
+  // ⚡ 저장 함수
   async function saveApplication() {
     if (!STATE.selectedSlot) return;
 
@@ -490,19 +434,6 @@ document.addEventListener('DOMContentLoaded', () => {
     closeModal(createWeekModal);
     showLoading(true);
 
-    if (!STATE.apiUrl) {
-      STATE.sheets.push(newWeekName);
-      STATE.currentSheet = newWeekName;
-      STATE.startDate = mondayDateVal;
-      STATE.data = generateDemoData();
-      renderWeekSelect();
-      updateTableHeaderDates();
-      renderTimetable();
-      showLoading(false);
-      alert(`데모 모드: '${newWeekName}'이(가) 새롭게 생성되었습니다.`);
-      return;
-    }
-
     try {
       const payload = {
         action: 'createSheet',
@@ -553,18 +484,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     delete DATA_CACHE[STATE.currentSheet];
 
-    if (!STATE.apiUrl) {
-      STATE.sheets = STATE.sheets.filter(s => s !== STATE.currentSheet);
-      STATE.currentSheet = STATE.sheets[0] || '8월 1주차';
-      STATE.data = generateDemoData();
-      renderWeekSelect();
-      updateTableHeaderDates();
-      renderTimetable();
-      showLoading(false);
-      alert('데모 모드: 해당 주간이 삭제되었습니다.');
-      return;
-    }
-
     try {
       const payload = {
         action: 'deleteSheet',
@@ -595,34 +514,6 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('주간 삭제 처리 중 오류가 발생했습니다.');
     } finally {
       showLoading(false);
-    }
-  }
-
-  async function testApiConnection() {
-    const url = inputApiUrl.value.trim() || DEFAULT_API_URL;
-    if (!url) {
-      alert('웹 앱 URL을 입력해 주세요.');
-      return;
-    }
-
-    btnTestApi.textContent = '테스트 중...';
-    btnTestApi.disabled = true;
-
-    try {
-      const response = await fetch(`${url}?action=getSheets`);
-      const result = await response.json();
-
-      if (result.status === 'success') {
-        alert('✅ 구글 시트 연동 성공!\n정상적으로 웹 앱 API와 통신할 수 있습니다.');
-      } else {
-        alert('❌ 연동 실패: ' + (result.message || '응답 형식이 올바르지 않습니다.'));
-      }
-    } catch (err) {
-      console.error(err);
-      alert('❌ 연동 실패!\nURL이 올바른지, 권한이 [모든 사용자]로 배포되었는지 확인해 주세요.');
-    } finally {
-      btnTestApi.textContent = '연동 테스트';
-      btnTestApi.disabled = false;
     }
   }
 

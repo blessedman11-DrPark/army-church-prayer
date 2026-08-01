@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>육군본부교회 중보기도 출석표</title>
-  <!-- 스마트폰 브라우저 캐시 무력화 버전 파라미터 적용 (v=1.0.6) -->
-  <link rel="stylesheet" href="styles.css?v=1.0.6">
+  <!-- 스마트폰 브라우저 캐시 무력화 버전 파라미터 적용 (v=1.0.7) -->
+  <link rel="stylesheet" href="styles.css?v=1.0.7">
 </head>
 <body>
 
@@ -108,19 +108,12 @@
       <p class="contact-info">※ 기타문의 : 주은실 (010-5579-0895) / 이선향(010-3321-3154)</p>
     </div>
 
-    <!-- 구글 시트 연동 상태 박스 (최소화) -->
-    <div class="status-bar-minimal">
-      <span id="statusDot" class="status-dot disconnected" title="연동 상태"></span>
-      <span id="statusText" class="status-text-muted">연동: 오프라인 모드</span>
-      <button id="btnApiSettings" class="btn-text-link">⚙️ 연동 설정</button>
-    </div>
-
     <footer class="footer">
       <p>© 육군본부교회 중보기도 사역팀 | 주간 중보기도 신청 시스템</p>
     </footer>
   </div>
 
-  <!-- 1. 중보기도 신청 / 수정 모달 (단줄 이름 및 자유시간 다줄 작성 지원) -->
+  <!-- 1. 중보기도 신청 / 수정 모달 -->
   <div id="applyModal" class="modal-backdrop">
     <div class="modal-card">
       <div class="modal-header">
@@ -209,28 +202,7 @@
     </div>
   </div>
 
-  <!-- 4. 구글 시트 API 연동 설정 모달 -->
-  <div id="apiSettingsModal" class="modal-backdrop">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">⚙️ 구글 시트 연동 설정</h3>
-        <button class="modal-close" class="btnCloseModal">&times;</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label" for="inputApiUrl">Google Apps Script 웹 앱 URL</label>
-          <input type="url" id="inputApiUrl" class="form-input" placeholder="https://script.google.com/macros/s/.../exec">
-          <div class="form-hint">* 구글 시트 [확장 프로그램] -> [Apps Script] 배포 후 생성된 URL을 입력해 주세요.</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="btnTestApi" class="btn btn-secondary">연동 테스트</button>
-        <button id="btnSaveApi" class="btn btn-primary">저장 및 연결</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 모바일 캐시 방지 버전 파라미터 적용 (v=1.0.6) -->
-  <script src="app.js?v=1.0.6"></script>
+  <!-- 모바일 캐시 방지 버전 파라미터 적용 (v=1.0.7) -->
+  <script src="app.js?v=1.0.7"></script>
 </body>
 </html>
