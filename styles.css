@@ -346,7 +346,35 @@ body {
   letter-spacing: -0.3px;
 }
 
-/* 기도 신청 슬롯 버튼 (스마트폰 한 줄 강제 정렬: white-space: nowrap 적용) */
+/* 🌟 자유시간 그룹 테두리 스타일 (이미지 요청 기반 옅은 하늘색 박스 그룹핑) */
+.free-group-start td {
+  border-top: 2.5px solid #0284c7 !important;
+}
+.free-group-start td:first-child {
+  border-left: 2.5px solid #0284c7 !important;
+}
+.free-group-start td:last-child {
+  border-right: 2.5px solid #0284c7 !important;
+}
+
+.free-group-mid td:first-child {
+  border-left: 2.5px solid #0284c7 !important;
+}
+.free-group-mid td:last-child {
+  border-right: 2.5px solid #0284c7 !important;
+}
+
+.free-group-end td {
+  border-bottom: 2.5px solid #0284c7 !important;
+}
+.free-group-end td:first-child {
+  border-left: 2.5px solid #0284c7 !important;
+}
+.free-group-end td:last-child {
+  border-right: 2.5px solid #0284c7 !important;
+}
+
+/* 기도 신청 슬롯 버튼 */
 .slot-wrapper {
   display: flex;
   gap: 4px;
@@ -368,7 +396,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap !important; /* 스마트폰 줄바꿈 방지 한 줄 정렬 */
+  white-space: nowrap !important;
   overflow: hidden;
   text-overflow: ellipsis;
   letter-spacing: -0.5px;
@@ -385,7 +413,7 @@ body {
   color: #1e3a8a !important;
   font-size: 14px !important;
   font-weight: 600 !important;
-  white-space: nowrap !important; /* 스마트폰 줄바꿈 방지 한 줄 정렬 */
+  white-space: nowrap !important;
   box-shadow: none !important;
 }
 

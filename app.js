@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 05:00 ~ 22:00 총 17개 타임슬롯 (새벽 05시, 06시 추가 지원)
+ * 자유시간 그룹화 시각적 테두리(Group Border) 레이아웃 지원
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const STATE = {
     apiUrl: activeApiUrl,
     currentSheet: '8월 1주차',
-    startDate: getTodayDateStr(), // 기본값: 오늘 날짜 (YYYY-MM-DD)
+    startDate: getTodayDateStr(),
     sheets: ['8월 1주차'],
     data: [],
     selectedSlot: null
@@ -83,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchData();
   }
 
-  // --- 오늘 날짜 반환 (YYYY-MM-DD) ---
   function getTodayDateStr() {
     const today = new Date();
     const y = today.getFullYear();
@@ -92,7 +91,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
-  // --- 이벤트 리스너 등록 ---
   function setupEventListeners() {
     weekSelect.addEventListener('change', (e) => {
       STATE.currentSheet = e.target.value;
@@ -230,7 +228,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
-  // ⚡ 초고속 데이터 로드 (17개 타임슬롯 지원)
   async function fetchData(forceRefresh = false) {
     const cacheKey = STATE.currentSheet;
 
@@ -312,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 타임테이블 렌더링 (17개 타임슬롯) ---
+  // --- 자유시간 그룹 테두리 구분 클래스 부여 렌더링 ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -322,6 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     STATE.data.forEach((slotData, timeIdx) => {
       const tr = document.createElement('tr');
+
+      // 자유시간 그룹 구분을 위한 클래스 지정 (오전: 0~3, 오후: 14~16)
+      if (timeIdx === 0) tr.className = 'free-group-start';
+      else if (timeIdx === 1 || timeIdx === 2) tr.className = 'free-group-mid';
+      else if (timeIdx === 3) tr.className = 'free-group-end';
+      else if (timeIdx === 14) tr.className = 'free-group-start';
+      else if (timeIdx === 15) tr.className = 'free-group-mid';
+      else if (timeIdx === 16) tr.className = 'free-group-end';
 
       const tdTime = document.createElement('td');
       tdTime.className = 'time-cell';
@@ -386,7 +391,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => inputName.focus(), 150);
   }
 
-  // ⚡ 낙관적 UI 적용
   async function saveApplication() {
     if (!STATE.selectedSlot) return;
 
