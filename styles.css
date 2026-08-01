@@ -78,6 +78,25 @@ body {
   color: #1e293b;
 }
 
+/* 🔄 최신화 인라인 버튼 */
+.btn-refresh-inline {
+  padding: 4px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 20px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  cursor: pointer;
+  margin-left: 2px;
+  transition: all 0.2s ease;
+}
+
+.btn-refresh-inline:hover {
+  background: #e2e8f0;
+  color: var(--primary-color);
+}
+
 .week-control-inline {
   display: inline-flex;
   align-items: center;
@@ -219,34 +238,6 @@ body {
   color: #166534;
 }
 
-.legend-group {
-  display: flex;
-  gap: 14px;
-  font-size: 12.5px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend-box {
-  width: 13px;
-  height: 13px;
-  border-radius: 3px;
-}
-
-.legend-box.empty {
-  background: var(--slot-empty);
-  border: 1px solid var(--slot-empty-border);
-}
-
-.legend-box.filled {
-  background: #ffffff;
-  border: 1px solid var(--slot-empty-border);
-}
-
 /* 타임테이블 카드 컨테이너 */
 .timetable-container {
   background: var(--card-bg);
@@ -289,14 +280,6 @@ body {
   font-weight: 700;
   color: #ffffff !important;
   text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  letter-spacing: -0.3px;
-}
-
-.timetable th .slot-sub {
-  font-size: 12px;
-  font-weight: 500;
-  color: #e0e7ff !important;
-  margin-top: 3px;
   letter-spacing: -0.3px;
 }
 
@@ -464,7 +447,7 @@ body {
   color: #475569;
 }
 
-/* 전화번호 통화 링크 스타일 (스마트폰 전체 11자리 연동 보장) */
+/* 전화번호 통화 링크 스타일 */
 .phone-link {
   color: #1e3a8a;
   text-decoration: underline;

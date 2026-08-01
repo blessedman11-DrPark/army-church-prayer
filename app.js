@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 자유시간 라벨 수정: (~ 09:00), (19:00 ~)
+ * 최신화(강제 새로고침) 버튼 및 다음 주 월요일 자동 계산 적용
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const weekSelect = document.getElementById('weekSelect');
   const btnPrevWeek = document.getElementById('btnPrevWeek');
   const btnNextWeek = document.getElementById('btnNextWeek');
+  const btnRefresh = document.getElementById('btnRefresh');
   const btnCreateWeek = document.getElementById('btnCreateWeek');
   const btnDeleteWeek = document.getElementById('btnDeleteWeek');
   const timetableBody = document.getElementById('timetableBody');
@@ -79,6 +80,23 @@ document.addEventListener('DOMContentLoaded', () => {
     return `${y}-${m}-${d}`;
   }
 
+  // 🌟 당일 날짜 기준 "다음 주 월요일" YYYY-MM-DD 구하기
+  function getNextMondayDateStr() {
+    const today = new Date();
+    const day = today.getDay(); // 0:일, 1:월, 2:화, 3:수, 4:목, 5:금, 6:토
+
+    // 다음 주 월요일까지 남은 일수 계산
+    const daysUntilNextMonday = (day === 0) ? 1 : (8 - day);
+
+    const nextMonday = new Date(today);
+    nextMonday.setDate(today.getDate() + daysUntilNextMonday);
+
+    const y = nextMonday.getFullYear();
+    const m = String(nextMonday.getMonth() + 1).padStart(2, '0');
+    const d = String(nextMonday.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
   function setupEventListeners() {
     weekSelect.addEventListener('change', (e) => {
       STATE.currentSheet = e.target.value;
@@ -88,10 +106,16 @@ document.addEventListener('DOMContentLoaded', () => {
     btnPrevWeek.addEventListener('click', () => navigateWeek(-1));
     btnNextWeek.addEventListener('click', () => navigateWeek(1));
 
+    // 🔄 최신화 (구글 시트 데이터 강제 새로고침)
+    btnRefresh.addEventListener('click', () => {
+      fetchData(true);
+    });
+
+    // 🔒 새로운 주간 만들기 클릭 시 다음 주 월요일 날짜 기본 적용
     btnCreateWeek.addEventListener('click', () => {
       inputAdminPassword.value = '';
       inputNewWeekName.value = '';
-      inputMondayDate.value = getTodayDateStr();
+      inputMondayDate.value = getNextMondayDateStr(); // 👈 다음 주 월요일로 설정
       openModal(createWeekModal);
       setTimeout(() => inputAdminPassword.focus(), 150);
     });
@@ -190,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
+  // ⚡ 초고속 데이터 로드 (forceRefresh = true 일 경우 캐시 무시 강제 신규 로드)
   async function fetchData(forceRefresh = false) {
     const cacheKey = STATE.currentSheet;
 
@@ -409,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function createNewWeek() {
     const password = inputAdminPassword.value.trim();
     const newWeekName = inputNewWeekName.value.trim();
-    const mondayDateVal = inputMondayDate.value.trim() || getTodayDateStr();
+    const mondayDateVal = inputMondayDate.value.trim() || getNextMondayDateStr();
 
     if (password !== 'prayer') {
       alert('🔒 관리자 암호가 올바르지 않습니다.');

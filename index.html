@@ -6,8 +6,8 @@
   <!-- 스마트폰 자동 전화번호 오인식 밑줄 방지 -->
   <meta name="format-detection" content="telephone=no">
   <title>육군본부교회 중보기도 출석표</title>
-  <!-- 스마트폰 브라우저 캐시 무력화 버전 파라미터 적용 (v=1.1.1) -->
-  <link rel="stylesheet" href="styles.css?v=1.1.1">
+  <!-- 스마트폰 브라우저 캐시 무력화 버전 파라미터 적용 (v=1.1.2) -->
+  <link rel="stylesheet" href="styles.css?v=1.1.2">
 </head>
 <body>
 
@@ -25,6 +25,9 @@
             <button id="btnNextWeek" class="btn btn-icon-sm" title="다음 주차">&gt;</button>
           </span>
           <span class="title-text">중보기도 출석표</span>
+          <button id="btnRefresh" class="btn btn-secondary btn-refresh-inline" title="구글 시트 데이터 강제 새로고침">
+            <span>🔄 최신화</span>
+          </button>
         </h1>
 
         <div class="action-btn-group">
@@ -38,7 +41,7 @@
       </div>
     </header>
 
-    <!-- 범례 및 안내 (신청 가능 / 신청 완료 범례 제거 심플 안내) -->
+    <!-- 범례 및 안내 -->
     <div class="guide-card">
       <div class="guide-text">
         💡 <strong>신청 방법:</strong> 비어있는 란을 클릭하여 이름을 등록해 주세요. 자유시간 칸은 4줄까지 자율 작성 가능합니다.
@@ -140,7 +143,7 @@
         <div class="form-group">
           <label class="form-label" for="inputMondayDate">해당 주간의 월요일 날짜</label>
           <input type="date" id="inputMondayDate" class="form-input">
-          <div class="form-hint">* 기본으로 오늘 날짜가 적용되며, 필요 시 해당 주 월요일 날짜로 변경하세요.</div>
+          <div class="form-hint">* 기본으로 다음 주 월요일 날짜가 자동 설정됩니다.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -175,7 +178,7 @@
     </div>
   </div>
 
-  <!-- 모바일 캐시 방지 버전 파라미터 적용 (v=1.1.1) -->
-  <script src="app.js?v=1.1.1"></script>
+  <!-- 모바일 캐시 방지 버전 파라미터 적용 (v=1.1.2) -->
+  <script src="app.js?v=1.1.2"></script>
 </body>
 </html>
