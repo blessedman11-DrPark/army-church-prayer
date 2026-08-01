@@ -1,13 +1,12 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 초고속 성능 최적화: 인메모리 SWR 캐싱 & 낙관적 UI(Optimistic UI) & 모바일 자동강제 연동
+ * 05:00 ~ 22:00 총 17개 타임슬롯 (새벽 05시, 06시 추가 지원)
  */
 
 document.addEventListener('DOMContentLoaded', () => {
   // 🔗 모든 사용자가 접속 즉시 연동되는 기본 구글 앱스 스크립트 배포 URL
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwRYIJKys8MTdyk-PCM-YukyOMLXq6UuBkANIKiL7MfPSSm80skmkHPr7_Ba00lilwxsw/exec';
 
-  // 모바일/PC 로컬스토리지 저장값 검사 및 기본값 자동 강제 적용
   let activeApiUrl = localStorage.getItem('gas_api_url');
   if (!activeApiUrl || activeApiUrl.trim() === '') {
     activeApiUrl = DEFAULT_API_URL;
@@ -24,10 +23,11 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedSlot: null
   };
 
-  // ⚡ 인메모리 데이터 캐시 (한번 방문한 시트는 0.001초 만에 즉시 표시)
+  // ⚡ 인메모리 데이터 캐시
   const DATA_CACHE = {};
 
   const TIME_LABELS = [
+    "(자유시간) 05:00 ~ 06:00", "(자유시간) 06:00 ~ 07:00",
     "(자유시간) 07:00 ~ 08:00", "(자유시간) 08:00 ~ 09:00",
     "09:00 ~ 10:00", "10:00 ~ 11:00", "11:00 ~ 12:00", "12:00 ~ 13:00",
     "13:00 ~ 14:00", "14:00 ~ 15:00", "15:00 ~ 16:00", "16:00 ~ 17:00",
@@ -216,13 +216,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function generateDemoData() {
     const demo = [];
-    for (let t = 0; t < 15; t++) {
+    for (let t = 0; t < 17; t++) {
       const days = [];
       for (let d = 0; d < 7; d++) {
         days.push({
           dayIndex: d,
-          slot1: (t === 0 && d === 0) ? '홍길동' : ((t === 1 && d === 1) ? '이은혜' : ''),
-          slot2: (t === 0 && d === 0) ? '김기도' : ''
+          slot1: (t === 2 && d === 0) ? '홍길동' : ((t === 3 && d === 1) ? '이은혜' : ''),
+          slot2: (t === 2 && d === 0) ? '김기도' : ''
         });
       }
       demo.push({ time: TIME_LABELS[t], days });
@@ -230,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
-  // ⚡ 초고속 데이터 로드 (인메모리 캐시 ➔ 비동기 백그라운드 동기화 SWR 패턴)
+  // ⚡ 초고속 데이터 로드 (17개 타임슬롯 지원)
   async function fetchData(forceRefresh = false) {
     const cacheKey = STATE.currentSheet;
 
@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- 타임테이블 렌더링 ---
+  // --- 타임테이블 렌더링 (17개 타임슬롯) ---
   function renderTimetable() {
     timetableBody.innerHTML = '';
 
@@ -386,7 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => inputName.focus(), 150);
   }
 
-  // ⚡ 낙관적 UI 적용 (0.001초 만에 화면 변경 ➔ 백그라운드 비동기 구글시트 반영)
+  // ⚡ 낙관적 UI 적용
   async function saveApplication() {
     if (!STATE.selectedSlot) return;
 
