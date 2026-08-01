@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - 클라이언트 애플리케이션 (app.js)
- * 모바일 최적화: 신청 모달 터치 팝업 및 스크롤 포지션 100% 보존
+ * 실시간 무소음 자동 동기화 (Smart Silent Auto-Polling, 15초 간격) 적용
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -64,12 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnConfirmDeleteWeek = document.getElementById('btnConfirmDeleteWeek');
   const btnCancelDeleteWeek = document.getElementById('btnCancelDeleteWeek');
 
+  // ⚡ 실시간 무소음 자동 동기화 타이머 참조
+  let autoPollingTimer = null;
+
   // --- 초기화 ---
   init();
 
   function init() {
     setupEventListeners();
     fetchData(true, true);
+    startAutoPolling(); // 🌟 실시간 자동 동기화 시작 (15초 주기)
   }
 
   function getTodayDateStr() {
@@ -103,6 +107,18 @@ document.addEventListener('DOMContentLoaded', () => {
       return `${match[1]}시`;
     }
     return rawTimeStr;
+  }
+
+  // 🌟 실시간 무소음 자동 동기화 엔진 (15초 주기)
+  function startAutoPolling() {
+    if (autoPollingTimer) clearInterval(autoPollingTimer);
+    autoPollingTimer = setInterval(() => {
+      // 모달이 열려있거나, 화면 탭이 비활성이거나, 입력 중일 때는 자동 동기화 일시정지
+      const isModalOpen = document.querySelector('.modal-backdrop.active');
+      if (!isModalOpen && !document.hidden && STATE.apiUrl) {
+        fetchData(true, false, true); // silentRefresh = true (스피너 없는 무소음 갱신)
+      }
+    }, 15000);
   }
 
   function setupEventListeners() {
@@ -221,7 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return demo;
   }
 
-  async function fetchData(forceRefresh = false, fetchLatestSheet = false) {
+  // ⚡ 데이터 조회 (silentRefresh = true 일 때 스피너 없이 무소음 실시간 갱신)
+  async function fetchData(forceRefresh = false, fetchLatestSheet = false, silentRefresh = false) {
     const targetSheetName = fetchLatestSheet ? '' : (STATE.currentSheet || '');
     const cacheKey = targetSheetName;
 
@@ -232,11 +249,11 @@ document.addEventListener('DOMContentLoaded', () => {
       renderWeekSelect();
       updateTableHeaderDates();
       renderTimetable();
-      showLoading(false);
+      if (!silentRefresh) showLoading(false);
       return;
     }
 
-    showLoading(true);
+    if (!silentRefresh) showLoading(true);
 
     try {
       const url = `${STATE.apiUrl}?action=getData${targetSheetName ? `&sheetName=${encodeURIComponent(targetSheetName)}` : ''}`;
@@ -253,16 +270,32 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.startDate) {
           STATE.startDate = result.startDate;
         }
-        STATE.data = result.data || [];
+        
+        // 데이터 변경 여부 감지 및 무소음 렌더링
+        const newDataStr = JSON.stringify(result.data || []);
+        const oldDataStr = JSON.stringify(STATE.data || []);
 
-        DATA_CACHE[STATE.currentSheet] = {
-          startDate: STATE.startDate,
-          data: STATE.data
-        };
+        if (newDataStr !== oldDataStr || fetchLatestSheet) {
+          STATE.data = result.data || [];
+          DATA_CACHE[STATE.currentSheet] = {
+            startDate: STATE.startDate,
+            data: STATE.data
+          };
 
-        renderWeekSelect();
-        updateTableHeaderDates();
-        renderTimetable();
+          // 스크롤 위치 보존 무소음 갱신
+          const currentScrollY = window.scrollY || window.pageYOffset;
+          const timetableContainer = document.querySelector('.timetable-container');
+          const currentScrollLeft = timetableContainer ? timetableContainer.scrollLeft : 0;
+
+          renderWeekSelect();
+          updateTableHeaderDates();
+          renderTimetable();
+
+          if (silentRefresh) {
+            window.scrollTo(0, currentScrollY);
+            if (timetableContainer) timetableContainer.scrollLeft = currentScrollLeft;
+          }
+        }
       } else {
         if (!DATA_CACHE[cacheKey]) {
           STATE.data = generateDemoData();
@@ -276,7 +309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTimetable();
       }
     } finally {
-      showLoading(false);
+      if (!silentRefresh) showLoading(false);
     }
   }
 
@@ -423,7 +456,6 @@ document.addEventListener('DOMContentLoaded', () => {
   async function saveApplication() {
     if (!STATE.selectedSlot) return;
 
-    // 1. 현재 모바일 화면 스크롤 Y 위치 및 표 가로 스크롤 X 위치 기록
     const currentScrollY = window.scrollY || window.pageYOffset;
     const timetableContainer = document.querySelector('.timetable-container');
     const currentScrollLeft = timetableContainer ? timetableContainer.scrollLeft : 0;
@@ -442,10 +474,8 @@ document.addEventListener('DOMContentLoaded', () => {
       DATA_CACHE[STATE.currentSheet].data = STATE.data;
     }
     
-    // 타임테이블 DOM 업데이트
     renderTimetable();
 
-    // 🌟 모바일 스크롤 위치 원상복구 (화면이 위로 튀어 올라가는 현상 완전 제거)
     window.scrollTo(0, currentScrollY);
     if (timetableContainer) {
       timetableContainer.scrollLeft = currentScrollLeft;
@@ -580,7 +610,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🌟 모바일 팝업 최적화 (z-index 및 터치 안정성 강화)
   function openModal(modalEl) {
     modalEl.classList.add('active');
   }
