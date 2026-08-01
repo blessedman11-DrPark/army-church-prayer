@@ -244,7 +244,7 @@ body {
 
 .legend-box.filled {
   background: #ffffff;
-  border: 1px solid #475569;
+  border: 1px solid #94a3b8;
 }
 
 /* 타임테이블 카드 컨테이너 */
@@ -332,13 +332,13 @@ body {
   padding: 6px 4px !important;
 }
 
-/* 자유시간 뱃지 스타일 (옅은 푸른색 계통 적용) */
+/* 자유시간 뱃지 스타일 */
 .free-time-badge {
   display: inline-block;
   font-size: 11px;
   font-weight: 700;
-  color: #0369a1;        /* 딥 블루 */
-  background: #e0f2fe;   /* 옅은 스카이 블루 */
+  color: #0369a1;
+  background: #e0f2fe;
   border: 1px solid #bae6fd;
   border-radius: 10px;
   padding: 1px 7px;
@@ -376,17 +376,18 @@ body {
   border-color: #94a3b8;
 }
 
-/* 신청 완료 시에도 배경색은 비어있는 박스와 동일하게 흰색(#ffffff)으로 통일 */
+/* 신청 완료 박스 스타일 (검정 테두리 제거 ➔ 주변과 부드럽게 어우러지는 소프트 보더) */
 .slot-btn.filled {
   background: #ffffff !important;
-  border: 1.5px solid #475569 !important;
-  color: #0f172a !important;
+  border: 1px solid #94a3b8 !important;
+  color: #1e293b !important;
   font-weight: 700 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .slot-btn.filled:hover {
-  background: #f1f5f9 !important;
-  border-color: #1e293b !important;
+  background: #f8fafc !important;
+  border-color: #64748b !important;
 }
 
 /* 임명 안내 카드 */
