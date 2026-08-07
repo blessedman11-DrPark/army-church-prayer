@@ -14,8 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     startDate: getTodayDateStr(),
     sheets: [],
     data: [],
-    selectedSlot: null,
-    lastFocusedSlot: null
+    selectedSlot: null
   };
 
   // ⚡ 인메모리 데이터 캐시
@@ -167,65 +166,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCancelDeleteWeek.addEventListener('click', () => closeModal(deleteWeekModal));
 
     btnSaveApply.addEventListener('click', saveApplication);
-    
-    // 🌟 성함 입력창 키 이벤트 (Enter: 저장 / ArrowDown: 저장 후 아래로 이동 / ArrowUp: 저장 후 위로 이동)
-    inputName.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        saveApplication();
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        saveApplication();
-        setTimeout(() => navigateSlotByArrow('Down'), 30);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        saveApplication();
-        setTimeout(() => navigateSlotByArrow('Up'), 30);
-      }
-    });
-
-    // 🌟 자유시간 메모 입력창 키 이벤트 (Ctrl+Enter / Ctrl+ArrowDown / Ctrl+ArrowUp)
-    inputFreeText.addEventListener('keydown', (e) => {
-      if (e.ctrlKey && e.key === 'Enter') {
-        e.preventDefault();
-        saveApplication();
-      } else if (e.ctrlKey && e.key === 'ArrowDown') {
-        e.preventDefault();
-        saveApplication();
-        setTimeout(() => navigateSlotByArrow('Down'), 30);
-      } else if (e.ctrlKey && e.key === 'ArrowUp') {
-        e.preventDefault();
-        saveApplication();
-        setTimeout(() => navigateSlotByArrow('Up'), 30);
-      }
+    inputName.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') saveApplication();
     });
 
     btnSaveCreateWeek.addEventListener('click', createNewWeek);
     btnConfirmDeleteWeek.addEventListener('click', deleteCurrentWeek);
-
-    // 🌟 타임테이블 화면 키보드 조작 (화살표: 하이라이트 박스 이동 / Enter 또는 Space: 모달 열기)
-    document.addEventListener('keydown', (e) => {
-      const activeModal = document.querySelector('.modal-backdrop.active');
-      if (!activeModal) {
-        const tag = e.target ? e.target.tagName : '';
-        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-          return;
-        }
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-          e.preventDefault();
-          const dirMap = {
-            'ArrowUp': 'Up',
-            'ArrowDown': 'Down',
-            'ArrowLeft': 'Left',
-            'ArrowRight': 'Right'
-          };
-          navigateSlotByArrow(dirMap[e.key]);
-        } else if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          openFocusedSlotModal();
-        }
-      }
-    });
   }
 
   function navigateWeek(direction) {
@@ -449,99 +395,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function highlightFocusedSlot(dayIndex, timeIndex, slotIndex) {
-    document.querySelectorAll('.slot-btn, .free-slot-btn').forEach(b => b.classList.remove('focused-slot'));
-    const selector = `.slot-btn[data-day-idx="${dayIndex}"][data-time-idx="${timeIndex}"][data-slot-idx="${slotIndex}"], .free-slot-btn[data-day-idx="${dayIndex}"][data-time-idx="${timeIndex}"]`;
-    const btn = document.querySelector(selector);
-    if (btn) {
-      btn.classList.add('focused-slot');
-      btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    }
-  }
-
-  function navigateSlotByArrow(direction) {
-    let { dayIndex, timeIndex, slotIndex } = STATE.lastFocusedSlot || { dayIndex: 0, timeIndex: 0, slotIndex: 0 };
-    const maxTimeIdx = 11;
-    const maxDayIdx = 6;
-
-    const isCurrentFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
-
-    if (direction === 'Up') {
-      // ⬆️ 위쪽: 같은 날의 위 시간대로 이동
-      if (timeIndex > 0) {
-        timeIndex--;
-        const isTargetFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
-        if (isTargetFree) slotIndex = 0;
-      }
-    } else if (direction === 'Down') {
-      // ⬇️ 아래쪽: 같은 날의 아래 시간대로 이동
-      if (timeIndex < maxTimeIdx) {
-        timeIndex++;
-        const isTargetFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
-        if (isTargetFree) slotIndex = 0;
-      }
-    } else if (direction === 'Right') {
-      // ➡️ 오른쪽: 신청자1 ➔ 신청자2(같은 날) / 신청자2 ➔ 다음 날 신청자1
-      if (isCurrentFree) {
-        dayIndex = Math.min(maxDayIdx, dayIndex + 1);
-        slotIndex = 0;
-      } else {
-        if (slotIndex === 0) {
-          slotIndex = 1;
-        } else {
-          dayIndex = Math.min(maxDayIdx, dayIndex + 1);
-          slotIndex = 0;
-        }
-      }
-    } else if (direction === 'Left') {
-      // ⬅️ 왼쪽: 신청자2 ➔ 신청자1(같은 날) / 신청자1 ➔ 전날 신청자2
-      if (isCurrentFree) {
-        dayIndex = Math.max(0, dayIndex - 1);
-        slotIndex = 0;
-      } else {
-        if (slotIndex === 1) {
-          slotIndex = 0;
-        } else {
-          dayIndex = Math.max(0, dayIndex - 1);
-          slotIndex = 1;
-        }
-      }
-    }
-
-    STATE.lastFocusedSlot = { dayIndex, timeIndex, slotIndex };
-    highlightFocusedSlot(dayIndex, timeIndex, slotIndex);
-  }
-
-  function openFocusedSlotModal() {
-    const { dayIndex, timeIndex, slotIndex } = STATE.lastFocusedSlot || { dayIndex: 0, timeIndex: 0, slotIndex: 0 };
-    const maxTimeIdx = 11;
-    const slotData = STATE.data[timeIndex];
-    if (!slotData) return;
-    const dayData = (slotData.days && slotData.days[dayIndex]) || { slot1: '', slot2: '' };
-    const isFreeTime = (timeIndex === 0 || timeIndex === maxTimeIdx || slotData.isFreeTime);
-    const currentText = isFreeTime ? dayData.slot1 : (slotIndex === 0 ? dayData.slot1 : dayData.slot2);
-
-    openApplyModal(dayIndex, timeIndex, slotIndex, currentText || '', isFreeTime);
-  }
-
   function createSlotButton(name, dayIndex, timeIndex, slotIndex) {
     const btn = document.createElement('button');
     btn.type = 'button';
     const isFilled = name && name.trim().length > 0;
-    const isFocused = STATE.lastFocusedSlot &&
-      STATE.lastFocusedSlot.dayIndex === dayIndex &&
-      STATE.lastFocusedSlot.timeIndex === timeIndex &&
-      STATE.lastFocusedSlot.slotIndex === slotIndex;
 
-    btn.className = `slot-btn ${isFilled ? 'filled' : ''} ${isFocused ? 'focused-slot' : ''}`;
-    btn.dataset.dayIdx = dayIndex;
-    btn.dataset.timeIdx = timeIndex;
-    btn.dataset.slotIdx = slotIndex;
+    btn.className = `slot-btn ${isFilled ? 'filled' : ''}`;
     btn.textContent = isFilled ? name : '';
 
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      STATE.lastFocusedSlot = { dayIndex, timeIndex, slotIndex };
       openApplyModal(dayIndex, timeIndex, slotIndex, isFilled ? name : '', false);
     });
 
@@ -552,20 +415,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.createElement('button');
     btn.type = 'button';
     const isFilled = text && text.trim().length > 0;
-    const isFocused = STATE.lastFocusedSlot &&
-      STATE.lastFocusedSlot.dayIndex === dayIndex &&
-      STATE.lastFocusedSlot.timeIndex === timeIndex &&
-      STATE.lastFocusedSlot.slotIndex === 0;
 
-    btn.className = `free-slot-btn ${isFilled ? 'filled' : ''} ${isFocused ? 'focused-slot' : ''}`;
-    btn.dataset.dayIdx = dayIndex;
-    btn.dataset.timeIdx = timeIndex;
-    btn.dataset.slotIdx = 0;
+    btn.className = `free-slot-btn ${isFilled ? 'filled' : ''}`;
     btn.innerText = isFilled ? text : '';
 
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      STATE.lastFocusedSlot = { dayIndex, timeIndex, slotIndex: 0 };
       openApplyModal(dayIndex, timeIndex, 0, isFilled ? text : '', true);
     });
 
@@ -574,8 +429,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openApplyModal(dayIndex, timeIndex, slotIndex, currentText, isFreeTime) {
     STATE.selectedSlot = { dayIndex, timeIndex, slotIndex, currentText, isFreeTime };
-    STATE.lastFocusedSlot = { dayIndex, timeIndex, slotIndex };
-    highlightFocusedSlot(dayIndex, timeIndex, slotIndex);
 
     const dateLabels = calculateWeekHeaderDates(STATE.startDate);
     const dayLabel = dateLabels[dayIndex] || BASE_DAY_NAMES[dayIndex];
@@ -595,10 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
       groupNormalInput.style.display = 'block';
       inputName.value = currentText;
       openModal(applyModal);
-      setTimeout(() => {
-        inputName.focus();
-        if (inputName.value) inputName.select();
-      }, 80);
+      setTimeout(() => inputName.focus(), 150);
     }
   }
 
@@ -613,8 +463,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const { dayIndex, timeIndex, slotIndex, isFreeTime } = STATE.selectedSlot;
     const val = isFreeTime ? inputFreeText.value.trim() : inputName.value.trim();
 
-    STATE.lastFocusedSlot = { dayIndex, timeIndex, slotIndex };
-
     closeModal(applyModal);
 
     if (STATE.data[timeIndex] && STATE.data[timeIndex].days[dayIndex]) {
@@ -627,7 +475,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     renderTimetable();
-    highlightFocusedSlot(dayIndex, timeIndex, slotIndex);
 
     window.scrollTo(0, currentScrollY);
     if (timetableContainer) {
