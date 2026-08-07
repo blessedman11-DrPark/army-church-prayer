@@ -5,7 +5,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
   // 🔗 모든 사용자가 접속 즉시 연동되는 고정 구글 앱스 스크립트 배포 URL
-  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbwRYIJKys8MTdyk-PCM-YukyOMLXq6UuBkANIKiL7MfPSSm80skmkHPr7_Ba00lilwxsw/exec';
+  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbzM3nXJpYYmzdAeoDFaKILmlu88jpMpV1as1tRIFj9Jq90MJX-Iqa_VfSlYbx1lisjjTA/exec';
 
   // --- 상태 관리 ---
   const STATE = {
