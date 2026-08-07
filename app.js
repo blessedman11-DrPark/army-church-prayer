@@ -464,30 +464,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const maxTimeIdx = 11;
     const maxDayIdx = 6;
 
+    const isCurrentFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
+
     if (direction === 'Up') {
-      if (timeIndex > 0 && timeIndex < maxTimeIdx && slotIndex === 1) {
-        slotIndex = 0;
-      } else if (timeIndex > 0) {
+      // ⬆️ 위쪽: 같은 날의 위 시간대로 이동
+      if (timeIndex > 0) {
         timeIndex--;
         const isTargetFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
-        slotIndex = isTargetFree ? 0 : 1;
+        if (isTargetFree) slotIndex = 0;
       }
     } else if (direction === 'Down') {
-      const isCurrentFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
-      if (!isCurrentFree && slotIndex === 0) {
-        slotIndex = 1;
-      } else if (timeIndex < maxTimeIdx) {
+      // ⬇️ 아래쪽: 같은 날의 아래 시간대로 이동
+      if (timeIndex < maxTimeIdx) {
         timeIndex++;
+        const isTargetFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
+        if (isTargetFree) slotIndex = 0;
+      }
+    } else if (direction === 'Right') {
+      // ➡️ 오른쪽: 신청자1 ➔ 신청자2(같은 날) / 신청자2 ➔ 다음 날 신청자1
+      if (isCurrentFree) {
+        dayIndex = Math.min(maxDayIdx, dayIndex + 1);
         slotIndex = 0;
+      } else {
+        if (slotIndex === 0) {
+          slotIndex = 1;
+        } else {
+          dayIndex = Math.min(maxDayIdx, dayIndex + 1);
+          slotIndex = 0;
+        }
       }
     } else if (direction === 'Left') {
-      dayIndex = Math.max(0, dayIndex - 1);
-      const isTargetFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
-      if (isTargetFree) slotIndex = 0;
-    } else if (direction === 'Right') {
-      dayIndex = Math.min(maxDayIdx, dayIndex + 1);
-      const isTargetFree = (timeIndex === 0 || timeIndex === maxTimeIdx || (STATE.data[timeIndex] && STATE.data[timeIndex].isFreeTime));
-      if (isTargetFree) slotIndex = 0;
+      // ⬅️ 왼쪽: 신청자2 ➔ 신청자1(같은 날) / 신청자1 ➔ 전날 신청자2
+      if (isCurrentFree) {
+        dayIndex = Math.max(0, dayIndex - 1);
+        slotIndex = 0;
+      } else {
+        if (slotIndex === 1) {
+          slotIndex = 0;
+        } else {
+          dayIndex = Math.max(0, dayIndex - 1);
+          slotIndex = 1;
+        }
+      }
     }
 
     STATE.lastFocusedSlot = { dayIndex, timeIndex, slotIndex };
