@@ -677,3 +677,66 @@ body {
   font-size: 13px;
   border-top: 1px solid #e2e8f0;
 }
+
+/* 📋 상시 기도자 관리 모달 전용 스타일 */
+.modal-card-lg {
+  max-width: 580px !important;
+}
+
+.reg-form-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.reg-form-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.reg-form-row:last-child {
+  margin-bottom: 0;
+}
+
+.flex-1 { flex: 1; }
+.flex-2 { flex: 2; }
+.align-end { align-items: flex-end; }
+
+.reg-table-wrapper {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid #cbd5e1;
+  border-radius: var(--radius-sm);
+  background: white;
+}
+
+.reg-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+
+.reg-table th {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  padding: 8px 10px !important;
+  font-weight: 700;
+  text-align: left;
+  border-bottom: 1px solid #cbd5e1 !important;
+  position: sticky;
+  top: 0;
+}
+
+.reg-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.reg-table tr:hover td {
+  background-color: #f8fafc;
+}

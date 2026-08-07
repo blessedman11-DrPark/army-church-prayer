@@ -14,8 +14,26 @@ document.addEventListener('DOMContentLoaded', () => {
     startDate: getTodayDateStr(),
     sheets: [],
     data: [],
-    selectedSlot: null
+    selectedSlot: null,
+    regularPrayers: loadRegularPrayersStorage()
   };
+
+  function loadRegularPrayersStorage() {
+    try {
+      const saved = localStorage.getItem('army_church_regular_prayers');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveRegularPrayersStorage() {
+    try {
+      localStorage.setItem('army_church_regular_prayers', JSON.stringify(STATE.regularPrayers));
+    } catch (e) {
+      console.error('Storage error:', e);
+    }
+  }
 
   // ⚡ 인메모리 데이터 캐시
   const DATA_CACHE = {};
@@ -63,6 +81,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputDeleteAdminPassword = document.getElementById('inputDeleteAdminPassword');
   const btnConfirmDeleteWeek = document.getElementById('btnConfirmDeleteWeek');
   const btnCancelDeleteWeek = document.getElementById('btnCancelDeleteWeek');
+
+  const btnRegularPrayers = document.getElementById('btnRegularPrayers');
+  const regularPrayersModal = document.getElementById('regularPrayersModal');
+  const regDaySelect = document.getElementById('regDaySelect');
+  const regTimeSelect = document.getElementById('regTimeSelect');
+  const regNameInput = document.getElementById('regNameInput');
+  const btnAddRegularPrayer = document.getElementById('btnAddRegularPrayer');
+  const regularPrayersTableBody = document.getElementById('regularPrayersTableBody');
+  const regPrayerCount = document.getElementById('regPrayerCount');
 
   // ⚡ 실시간 무소음 자동 동기화 타이머 참조
   let autoPollingTimer = null;
@@ -153,11 +180,22 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => inputDeleteAdminPassword.focus(), 150);
     });
 
+    btnRegularPrayers.addEventListener('click', () => {
+      renderRegularPrayersTable();
+      openModal(regularPrayersModal);
+    });
+
+    btnAddRegularPrayer.addEventListener('click', addRegularPrayer);
+    regNameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') addRegularPrayer();
+    });
+
     document.querySelectorAll('.btnCloseModal').forEach(btn => {
       btn.addEventListener('click', () => {
         closeModal(applyModal);
         closeModal(createWeekModal);
         closeModal(deleteWeekModal);
+        closeModal(regularPrayersModal);
       });
     });
 
@@ -546,12 +584,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (result.startDate) STATE.startDate = result.startDate;
 
         STATE.data = result.data || generateDemoData();
+
+        // 🌟 상시 기도자 명단 새 주간에 자동으로 사전 채우기
+        applyRegularPrayersToCurrentSheet();
+
         DATA_CACHE[STATE.currentSheet] = { startDate: STATE.startDate, data: STATE.data };
 
         renderWeekSelect();
         updateTableHeaderDates();
         renderTimetable();
-        alert(`'${newWeekName}' 주간 출석표가 성공적으로 생성되었습니다!`);
+        alert(`'${newWeekName}' 주간 출석표가 성공적으로 생성되었으며, 등록된 상시 기도자가 자동으로 채워졌습니다!`);
       } else {
         alert('주간 생성 실패: ' + result.message);
       }
@@ -561,6 +603,122 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       showLoading(false);
     }
+  }
+
+  // 🌟 상시 기도자 관리 기능 및 새 주간 자동 채우기 함수들
+  function renderRegularPrayersTable() {
+    if (!regularPrayersTableBody) return;
+    regularPrayersTableBody.innerHTML = '';
+    regPrayerCount.textContent = STATE.regularPrayers.length;
+
+    if (STATE.regularPrayers.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px 0;">등록된 상시 기도자가 없습니다. 상단 폼에서 추가해 주세요.</td>`;
+      regularPrayersTableBody.appendChild(tr);
+      return;
+    }
+
+    STATE.regularPrayers.sort((a, b) => (a.dayIndex - b.dayIndex) || (a.timeIndex - b.timeIndex));
+
+    STATE.regularPrayers.forEach((item) => {
+      const tr = document.createElement('tr');
+      const timeText = item.timeLabel || TIME_LABELS[item.timeIndex] || '';
+
+      tr.innerHTML = `
+        <td style="font-weight: 600; color: #1e3a8a;">${item.dayName}</td>
+        <td>${timeText}</td>
+        <td style="font-weight: 700; color: #0d9488;">${item.name}</td>
+        <td style="text-align: center;">
+          <button class="btn btn-danger-sm" style="padding: 3px 8px; font-size: 11.5px;">🗑️ 삭제</button>
+        </td>
+      `;
+
+      const btnDelete = tr.querySelector('button');
+      btnDelete.addEventListener('click', () => deleteRegularPrayer(item.id));
+
+      regularPrayersTableBody.appendChild(tr);
+    });
+  }
+
+  function addRegularPrayer() {
+    const name = regNameInput.value.trim();
+    if (!name) {
+      alert('기도자 성함을 입력해 주세요.');
+      regNameInput.focus();
+      return;
+    }
+
+    const dayIndex = parseInt(regDaySelect.value, 10);
+    const timeIndex = parseInt(regTimeSelect.value, 10);
+    const timeLabel = regTimeSelect.options[regTimeSelect.selectedIndex].text;
+    const dayName = BASE_DAY_NAMES[dayIndex] + '요일';
+
+    const newItem = {
+      id: Date.now().toString(),
+      dayIndex,
+      dayName,
+      timeIndex,
+      timeLabel,
+      name
+    };
+
+    STATE.regularPrayers.push(newItem);
+    saveRegularPrayersStorage();
+    renderRegularPrayersTable();
+
+    regNameInput.value = '';
+    regNameInput.focus();
+  }
+
+  function deleteRegularPrayer(id) {
+    STATE.regularPrayers = STATE.regularPrayers.filter(item => item.id !== id);
+    saveRegularPrayersStorage();
+    renderRegularPrayersTable();
+  }
+
+  function applyRegularPrayersToCurrentSheet() {
+    if (!STATE.regularPrayers || STATE.regularPrayers.length === 0) return;
+
+    STATE.regularPrayers.forEach(item => {
+      const { dayIndex, timeIndex, name } = item;
+      if (STATE.data[timeIndex] && STATE.data[timeIndex].days && STATE.data[timeIndex].days[dayIndex]) {
+        const isFreeTime = (timeIndex === 0 || timeIndex === 11 || STATE.data[timeIndex].isFreeTime);
+        const dayObj = STATE.data[timeIndex].days[dayIndex];
+        let targetSlotIndex = 0;
+
+        if (isFreeTime) {
+          if (!dayObj.slot1) {
+            dayObj.slot1 = name;
+          } else if (!dayObj.slot1.includes(name)) {
+            dayObj.slot1 = dayObj.slot1 + '\n' + name;
+          }
+        } else {
+          if (!dayObj.slot1) {
+            dayObj.slot1 = name;
+            targetSlotIndex = 0;
+          } else if (!dayObj.slot2 && dayObj.slot1 !== name) {
+            dayObj.slot2 = name;
+            targetSlotIndex = 1;
+          } else {
+            return;
+          }
+        }
+
+        if (STATE.apiUrl) {
+          fetch(STATE.apiUrl, {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'update',
+              sheetName: STATE.currentSheet,
+              dayIndex: dayIndex,
+              timeIndex: timeIndex,
+              slotIndex: isFreeTime ? 0 : targetSlotIndex,
+              name: isFreeTime ? dayObj.slot1 : name
+            })
+          }).catch(err => console.error('Auto fill sync error:', err));
+        }
+      }
+    });
   }
 
   async function deleteCurrentWeek() {
