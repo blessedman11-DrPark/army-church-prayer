@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSaveCreateWeek.addEventListener('click', createNewWeek);
     btnConfirmDeleteWeek.addEventListener('click', deleteCurrentWeek);
 
-    // 🌟 글로벌 키보드 화살표 키(⬆️⬇️⬅️➡️) 이동 및 모달 자동 입력 박스 활성화
+    // 🌟 타임테이블 화면 키보드 조작 (화살표: 하이라이트 박스 이동 / Enter 또는 Space: 모달 열기)
     document.addEventListener('keydown', (e) => {
       const activeModal = document.querySelector('.modal-backdrop.active');
       if (!activeModal) {
@@ -220,6 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
             'ArrowRight': 'Right'
           };
           navigateSlotByArrow(dirMap[e.key]);
+        } else if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openFocusedSlotModal();
         }
       }
     });
@@ -489,7 +492,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     STATE.lastFocusedSlot = { dayIndex, timeIndex, slotIndex };
     highlightFocusedSlot(dayIndex, timeIndex, slotIndex);
+  }
 
+  function openFocusedSlotModal() {
+    const { dayIndex, timeIndex, slotIndex } = STATE.lastFocusedSlot || { dayIndex: 0, timeIndex: 0, slotIndex: 0 };
+    const maxTimeIdx = 11;
     const slotData = STATE.data[timeIndex];
     if (!slotData) return;
     const dayData = (slotData.days && slotData.days[dayIndex]) || { slot1: '', slot2: '' };
