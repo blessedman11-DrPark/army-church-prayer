@@ -214,6 +214,30 @@ function getRegularPrayersSheet(ss) {
   return sheet;
 }
 
+function getStartHourFromLabel(label) {
+  if (!label) return 0;
+  var match = label.toString().match(/(\d{2}):(\d{2})/);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+  return 0;
+}
+
+function sortRegularPrayersList(list) {
+  if (!list || !list.length) return [];
+  return list.sort(function(a, b) {
+    var dayA = parseInt(a.dayIndex) || 0;
+    var dayB = parseInt(b.dayIndex) || 0;
+    if (dayA !== dayB) return dayA - dayB;
+
+    var hourA = getStartHourFromLabel(a.timeLabel);
+    var hourB = getStartHourFromLabel(b.timeLabel);
+    if (hourA !== hourB) return hourA - hourB;
+
+    return (parseInt(a.timeIndex) || 0) - (parseInt(b.timeIndex) || 0);
+  });
+}
+
 function getRegularPrayersData(ss) {
   var sheet = getRegularPrayersSheet(ss);
   var lastRow = sheet.getLastRow();
@@ -234,7 +258,7 @@ function getRegularPrayersData(ss) {
       });
     }
   }
-  return result;
+  return sortRegularPrayersList(result);
 }
 
 function saveRegularPrayersData(ss, list) {
@@ -244,9 +268,10 @@ function saveRegularPrayersData(ss, list) {
   sheet.getRange(1, 1, 1, 6).setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold");
 
   if (list && list.length > 0) {
+    var sorted = sortRegularPrayersList(list);
     var rows = [];
-    for (var i = 0; i < list.length; i++) {
-      var item = list[i];
+    for (var i = 0; i < sorted.length; i++) {
+      var item = sorted[i];
       rows.push([
         item.id || (Date.now() + i).toString(),
         item.dayIndex,

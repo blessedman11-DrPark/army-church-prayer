@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function saveRegularPrayersStorage() {
+    if (typeof sortRegularPrayersList === 'function') {
+      sortRegularPrayersList(STATE.regularPrayers);
+    }
     try {
       localStorage.setItem('army_church_regular_prayers', JSON.stringify(STATE.regularPrayers));
     } catch (e) {
@@ -621,6 +624,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function getStartHourFromLabel(label) {
+    if (!label) return 0;
+    const match = label.toString().match(/(\d{2}):(\d{2})/);
+    if (match) {
+      return parseInt(match[1], 10);
+    }
+    return 0;
+  }
+
+  function sortRegularPrayersList(list) {
+    if (!list || !list.length) return [];
+    return list.sort((a, b) => {
+      const dayA = parseInt(a.dayIndex) || 0;
+      const dayB = parseInt(b.dayIndex) || 0;
+      if (dayA !== dayB) return dayA - dayB;
+
+      const hourA = getStartHourFromLabel(a.timeLabel);
+      const hourB = getStartHourFromLabel(b.timeLabel);
+      if (hourA !== hourB) return hourA - hourB;
+
+      return (parseInt(a.timeIndex) || 0) - (parseInt(b.timeIndex) || 0);
+    });
+  }
+
   // 🌟 고정 기도자 관리 기능 및 새 주간 자동 채우기 함수들
   function renderRegularPrayersTable() {
     if (!regularPrayersTableBody) return;
@@ -634,7 +661,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    STATE.regularPrayers.sort((a, b) => (a.dayIndex - b.dayIndex) || (a.timeIndex - b.timeIndex));
+    sortRegularPrayersList(STATE.regularPrayers);
 
     STATE.regularPrayers.forEach((item) => {
       const tr = document.createElement('tr');
