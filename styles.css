@@ -730,6 +730,7 @@ body {
   top: 0;
   z-index: 2;
   font-size: 12px;
+  white-space: nowrap !important;
 }
 
 .reg-table td {
@@ -739,6 +740,7 @@ body {
   vertical-align: middle;
   font-size: 12.5px;
   line-height: 1.25;
+  white-space: nowrap !important;
 }
 
 .reg-table tr:hover td {

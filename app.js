@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td>${timeText}</td>
         <td style="font-weight: 700; color: #0d9488;">${item.name}</td>
         <td style="text-align: center;">
-          <button class="btn btn-danger-sm" style="padding: 3px 8px; font-size: 11.5px;">🗑️ 삭제</button>
+          <button class="btn btn-danger-sm" style="padding: 2px 7px; font-size: 11.5px; white-space: nowrap; word-break: keep-all;">🗑️ 삭제</button>
         </td>
       `;
 
