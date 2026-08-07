@@ -601,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         STATE.data = result.data || generateDemoData();
 
-        // 🌟 상시 기도자 명단 새 주간에 자동으로 사전 채우기
+        // 🌟 고정 기도자 명단 새 주간에 자동으로 사전 채우기
         applyRegularPrayersToCurrentSheet();
 
         DATA_CACHE[STATE.currentSheet] = { startDate: STATE.startDate, data: STATE.data };
@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderWeekSelect();
         updateTableHeaderDates();
         renderTimetable();
-        alert(`'${newWeekName}' 주간 출석표가 성공적으로 생성되었으며, 등록된 상시 기도자가 자동으로 채워졌습니다!`);
+        alert(`'${newWeekName}' 주간 출석표가 성공적으로 생성되었으며, 등록된 고정 기도자가 자동으로 채워졌습니다!`);
       } else {
         alert('주간 생성 실패: ' + result.message);
       }
@@ -621,7 +621,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 🌟 상시 기도자 관리 기능 및 새 주간 자동 채우기 함수들
+  // 🌟 고정 기도자 관리 기능 및 새 주간 자동 채우기 함수들
   function renderRegularPrayersTable() {
     if (!regularPrayersTableBody) return;
     regularPrayersTableBody.innerHTML = '';
@@ -629,7 +629,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (STATE.regularPrayers.length === 0) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px 0;">등록된 상시 기도자가 없습니다. 상단 폼에서 추가해 주세요.</td>`;
+      tr.innerHTML = `<td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px 0;">등록된 고정 기도자가 없습니다. 상단 폼에서 추가해 주세요.</td>`;
       regularPrayersTableBody.appendChild(tr);
       return;
     }

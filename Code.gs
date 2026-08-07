@@ -8,6 +8,10 @@ function createJsonResponse(data) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function isSystemSheet(name) {
+  return name === '_고정기도자' || name === '_상시기도자';
+}
+
 function doGet(e) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -18,7 +22,7 @@ function doGet(e) {
       var sheetNames = [];
       for (var i = 0; i < sheets.length; i++) {
         var name = sheets[i].getName();
-        if (name !== '_상시기도자') sheetNames.push(name);
+        if (!isSystemSheet(name)) sheetNames.push(name);
       }
       return createJsonResponse({ status: 'success', sheets: sheetNames });
     }
@@ -36,7 +40,7 @@ function doGet(e) {
       var sheets = ss.getSheets();
       var validSheets = [];
       for (var s = 0; s < sheets.length; s++) {
-        if (sheets[s].getName() !== '_상시기도자') validSheets.push(sheets[s]);
+        if (!isSystemSheet(sheets[s].getName())) validSheets.push(sheets[s]);
       }
       if (validSheets.length === 0) {
         targetSheet = createInitialSheet(ss, "8월 1주차");
@@ -57,7 +61,7 @@ function doGet(e) {
     var sheetNames = [];
     for (var k = 0; k < allSheets.length; k++) {
       var sName = allSheets[k].getName();
-      if (sName !== '_상시기도자') sheetNames.push(sName);
+      if (!isSystemSheet(sName)) sheetNames.push(sName);
     }
     
     return createJsonResponse({
@@ -88,7 +92,7 @@ function doPost(e) {
     if (action === 'saveRegularPrayers') {
       var list = postData.regularPrayers || [];
       saveRegularPrayersData(ss, list);
-      return createJsonResponse({ status: 'success', message: '상시 기도자가 구글 시트에 저장되었습니다.', regularPrayers: list });
+      return createJsonResponse({ status: 'success', message: '고정 기도자가 구글 시트에 저장되었습니다.', regularPrayers: list });
     }
     
     if (action === 'createSheet') {
@@ -109,7 +113,7 @@ function doPost(e) {
       var sheetNames = [];
       for (var i = 0; i < allSheets.length; i++) {
         var sName = allSheets[i].getName();
-        if (sName !== '_상시기도자') sheetNames.push(sName);
+        if (!isSystemSheet(sName)) sheetNames.push(sName);
       }
       
       return createJsonResponse({
@@ -127,7 +131,7 @@ function doPost(e) {
       var sheets = ss.getSheets();
       var validSheets = [];
       for (var v = 0; v < sheets.length; v++) {
-        if (sheets[v].getName() !== '_상시기도자') validSheets.push(sheets[v]);
+        if (!isSystemSheet(sheets[v].getName())) validSheets.push(sheets[v]);
       }
       
       if (validSheets.length <= 1) {
@@ -146,7 +150,7 @@ function doPost(e) {
       var nextSheet = null;
       for (var j = 0; j < remainingSheets.length; j++) {
         var rName = remainingSheets[j].getName();
-        if (rName !== '_상시기도자') {
+        if (!isSystemSheet(rName)) {
           remainingNames.push(rName);
           nextSheet = remainingSheets[j];
         }
@@ -192,14 +196,20 @@ function doPost(e) {
   }
 }
 
-// 🌟 구글 시트 상시기도자 탭 관리 함수
+// 🌟 구글 시트 고정기도자 탭 관리 함수
 function getRegularPrayersSheet(ss) {
-  var sheet = ss.getSheetByName("_상시기도자");
+  var sheet = ss.getSheetByName("_고정기도자");
   if (!sheet) {
-    sheet = ss.insertSheet("_상시기도자");
-    sheet.getRange(1, 1, 1, 6).setValues([["ID", "요일인덱스", "요일명", "시간인덱스", "시간라벨", "성명"]]);
-    sheet.getRange(1, 1, 1, 6).setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold");
-    sheet.hideSheet();
+    var oldSheet = ss.getSheetByName("_상시기도자");
+    if (oldSheet) {
+      oldSheet.setName("_고정기도자");
+      sheet = oldSheet;
+    } else {
+      sheet = ss.insertSheet("_고정기도자");
+      sheet.getRange(1, 1, 1, 6).setValues([["ID", "요일인덱스", "요일명", "시간인덱스", "시간라벨", "성명"]]);
+      sheet.getRange(1, 1, 1, 6).setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold");
+      sheet.hideSheet();
+    }
   }
   return sheet;
 }

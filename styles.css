@@ -678,7 +678,7 @@ body {
   border-top: 1px solid #e2e8f0;
 }
 
-/* 📋 상시 기도자 관리 모달 전용 스타일 */
+/* 📋 고정 기도자 관리 모달 전용 스타일 */
 .modal-card-lg {
   max-width: 580px !important;
 }
