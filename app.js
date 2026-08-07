@@ -167,8 +167,37 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCancelDeleteWeek.addEventListener('click', () => closeModal(deleteWeekModal));
 
     btnSaveApply.addEventListener('click', saveApplication);
-    inputName.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') saveApplication();
+    
+    // 🌟 성함 입력창 키 이벤트 (Enter: 저장 / ArrowDown: 저장 후 아래로 이동 / ArrowUp: 저장 후 위로 이동)
+    inputName.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        saveApplication();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        saveApplication();
+        setTimeout(() => navigateSlotByArrow('Down'), 30);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        saveApplication();
+        setTimeout(() => navigateSlotByArrow('Up'), 30);
+      }
+    });
+
+    // 🌟 자유시간 메모 입력창 키 이벤트 (Ctrl+Enter / Ctrl+ArrowDown / Ctrl+ArrowUp)
+    inputFreeText.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault();
+        saveApplication();
+      } else if (e.ctrlKey && e.key === 'ArrowDown') {
+        e.preventDefault();
+        saveApplication();
+        setTimeout(() => navigateSlotByArrow('Down'), 30);
+      } else if (e.ctrlKey && e.key === 'ArrowUp') {
+        e.preventDefault();
+        saveApplication();
+        setTimeout(() => navigateSlotByArrow('Up'), 30);
+      }
     });
 
     btnSaveCreateWeek.addEventListener('click', createNewWeek);
@@ -178,6 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
       const activeModal = document.querySelector('.modal-backdrop.active');
       if (!activeModal) {
+        const tag = e.target ? e.target.tagName : '';
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+          return;
+        }
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
           e.preventDefault();
           const dirMap = {
@@ -537,7 +570,10 @@ document.addEventListener('DOMContentLoaded', () => {
       groupNormalInput.style.display = 'block';
       inputName.value = currentText;
       openModal(applyModal);
-      setTimeout(() => inputName.focus(), 150);
+      setTimeout(() => {
+        inputName.focus();
+        if (inputName.value) inputName.select();
+      }, 80);
     }
   }
 
