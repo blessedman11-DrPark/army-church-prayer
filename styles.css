@@ -433,6 +433,16 @@ body {
   border-color: #94a3b8 !important;
 }
 
+/* 키보드 화살표 선택 하이라이트 스타일 */
+.slot-btn.focused-slot,
+.free-slot-btn.focused-slot {
+  outline: 3px solid #2563eb !important;
+  outline-offset: 1px !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.45) !important;
+  z-index: 5;
+}
+
 /* 자유시간 전용 자유 입력 메모 박스 버튼 (두 줄 높이 48px로 슬림화) */
 .free-slot-btn {
   width: 100%;
