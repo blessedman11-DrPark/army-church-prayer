@@ -722,18 +722,25 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyRegularPrayersToCurrentSheet() {
     if (!STATE.regularPrayers || STATE.regularPrayers.length === 0) return;
 
+    sortRegularPrayersList(STATE.regularPrayers);
+
     STATE.regularPrayers.forEach(item => {
-      const { dayIndex, timeIndex, name } = item;
+      const { dayIndex, timeIndex, name, timeLabel } = item;
       if (STATE.data[timeIndex] && STATE.data[timeIndex].days && STATE.data[timeIndex].days[dayIndex]) {
         const isFreeTime = (timeIndex === 0 || timeIndex === 11 || STATE.data[timeIndex].isFreeTime);
         const dayObj = STATE.data[timeIndex].days[dayIndex];
         let targetSlotIndex = 0;
 
         if (isFreeTime) {
-          if (!dayObj.slot1) {
-            dayObj.slot1 = name;
-          } else if (!dayObj.slot1.includes(name)) {
-            dayObj.slot1 = dayObj.slot1 + '\n' + name;
+          // 🌟 자유시간 (09:00 이전, 19:00 이후): '07:00 서순예' 형식으로 기록
+          const match = (timeLabel || '').match(/(\d{2}:\d{2})/);
+          const startTime = match ? match[1] : '';
+          const formattedText = startTime ? `${startTime} ${name}` : name;
+
+          if (!dayObj.slot1 || dayObj.slot1.trim().length === 0) {
+            dayObj.slot1 = formattedText;
+          } else if (!dayObj.slot1.includes(formattedText)) {
+            dayObj.slot1 = dayObj.slot1 + '\n' + formattedText;
           }
         } else {
           if (!dayObj.slot1) {
