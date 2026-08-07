@@ -1,6 +1,6 @@
 /**
  * 육군본부교회 중보기도 출석표 - Google Apps Script (GAS) 초고속 백엔드 API
- * 지정 시트 없을 시 '가장 마지막(최신) 생성 시트'를 기본 리턴
+ * 구글 시트 연동: 시트별 중보기도 출석표 및 '_상시기도자' 시트 통합 관리
  */
 
 function createJsonResponse(data) {
@@ -17,21 +17,31 @@ function doGet(e) {
       var sheets = ss.getSheets();
       var sheetNames = [];
       for (var i = 0; i < sheets.length; i++) {
-        sheetNames.push(sheets[i].getName());
+        var name = sheets[i].getName();
+        if (name !== '_상시기도자') sheetNames.push(name);
       }
       return createJsonResponse({ status: 'success', sheets: sheetNames });
     }
     
+    if (action === 'getRegularPrayers') {
+      var regPrayers = getRegularPrayersData(ss);
+      return createJsonResponse({ status: 'success', regularPrayers: regPrayers });
+    }
+
     var sheetName = e.parameter.sheetName;
     var targetSheet = sheetName ? ss.getSheetByName(sheetName) : null;
     
     // 🌟 지정 시트가 없거나 새로고침 요청 시 구글 시트의 '가장 마지막 시트(최신 시트)'를 선택
     if (!targetSheet) {
       var sheets = ss.getSheets();
-      if (sheets.length === 0) {
+      var validSheets = [];
+      for (var s = 0; s < sheets.length; s++) {
+        if (sheets[s].getName() !== '_상시기도자') validSheets.push(sheets[s]);
+      }
+      if (validSheets.length === 0) {
         targetSheet = createInitialSheet(ss, "8월 1주차");
       } else {
-        targetSheet = sheets[sheets.length - 1]; // 가장 우측/마지막에 생성된 최신 시트
+        targetSheet = validSheets[validSheets.length - 1]; // 가장 우측/마지막에 생성된 최신 시트
       }
     }
     
@@ -41,11 +51,13 @@ function doGet(e) {
     
     var data = getSheetData(targetSheet);
     var startDate = getStartDateForSheet(targetSheet);
+    var regPrayers = getRegularPrayersData(ss);
     
     var allSheets = ss.getSheets();
     var sheetNames = [];
     for (var k = 0; k < allSheets.length; k++) {
-      sheetNames.push(allSheets[k].getName());
+      var sName = allSheets[k].getName();
+      if (sName !== '_상시기도자') sheetNames.push(sName);
     }
     
     return createJsonResponse({
@@ -53,6 +65,7 @@ function doGet(e) {
       currentSheet: targetSheet.getName(),
       startDate: startDate,
       sheets: sheetNames,
+      regularPrayers: regPrayers,
       data: data
     });
     
@@ -71,6 +84,12 @@ function doPost(e) {
     }
     
     var action = postData.action;
+
+    if (action === 'saveRegularPrayers') {
+      var list = postData.regularPrayers || [];
+      saveRegularPrayersData(ss, list);
+      return createJsonResponse({ status: 'success', message: '상시 기도자가 구글 시트에 저장되었습니다.', regularPrayers: list });
+    }
     
     if (action === 'createSheet') {
       var newSheetName = postData.sheetName;
@@ -89,7 +108,8 @@ function doPost(e) {
       var allSheets = ss.getSheets();
       var sheetNames = [];
       for (var i = 0; i < allSheets.length; i++) {
-        sheetNames.push(allSheets[i].getName());
+        var sName = allSheets[i].getName();
+        if (sName !== '_상시기도자') sheetNames.push(sName);
       }
       
       return createJsonResponse({
@@ -105,8 +125,12 @@ function doPost(e) {
     if (action === 'deleteSheet') {
       var deleteTargetName = postData.sheetName;
       var sheets = ss.getSheets();
+      var validSheets = [];
+      for (var v = 0; v < sheets.length; v++) {
+        if (sheets[v].getName() !== '_상시기도자') validSheets.push(sheets[v]);
+      }
       
-      if (sheets.length <= 1) {
+      if (validSheets.length <= 1) {
         return createJsonResponse({ status: 'error', message: '최소 1개의 주차 시트는 보존되어야 합니다.' });
       }
       
@@ -118,19 +142,23 @@ function doPost(e) {
       ss.deleteSheet(targetSheet);
       
       var remainingSheets = ss.getSheets();
-      var nextSheet = remainingSheets[remainingSheets.length - 1]; // 삭제 후에도 가장 최근 시트 선택
       var remainingNames = [];
+      var nextSheet = null;
       for (var j = 0; j < remainingSheets.length; j++) {
-        remainingNames.push(remainingSheets[j].getName());
+        var rName = remainingSheets[j].getName();
+        if (rName !== '_상시기도자') {
+          remainingNames.push(rName);
+          nextSheet = remainingSheets[j];
+        }
       }
       
       return createJsonResponse({
         status: 'success',
         message: '\'' + deleteTargetName + '\' 주간이 삭제되었습니다.',
-        currentSheet: nextSheet.getName(),
-        startDate: getStartDateForSheet(nextSheet),
+        currentSheet: nextSheet ? nextSheet.getName() : '',
+        startDate: nextSheet ? getStartDateForSheet(nextSheet) : '',
         sheets: remainingNames,
-        data: getSheetData(nextSheet)
+        data: nextSheet ? getSheetData(nextSheet) : []
       });
     }
     
@@ -161,6 +189,64 @@ function doPost(e) {
     
   } catch (err) {
     return createJsonResponse({ status: 'error', message: err.toString() });
+  }
+}
+
+// 🌟 구글 시트 상시기도자 탭 관리 함수
+function getRegularPrayersSheet(ss) {
+  var sheet = ss.getSheetByName("_상시기도자");
+  if (!sheet) {
+    sheet = ss.insertSheet("_상시기도자");
+    sheet.getRange(1, 1, 1, 6).setValues([["ID", "요일인덱스", "요일명", "시간인덱스", "시간라벨", "성명"]]);
+    sheet.getRange(1, 1, 1, 6).setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold");
+    sheet.hideSheet();
+  }
+  return sheet;
+}
+
+function getRegularPrayersData(ss) {
+  var sheet = getRegularPrayersSheet(ss);
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return [];
+
+  var values = sheet.getRange(2, 1, lastRow - 1, 6).getValues();
+  var result = [];
+  for (var i = 0; i < values.length; i++) {
+    var row = values[i];
+    if (row[5]) {
+      result.push({
+        id: row[0].toString(),
+        dayIndex: parseInt(row[1]),
+        dayName: row[2].toString(),
+        timeIndex: parseInt(row[3]),
+        timeLabel: row[4].toString(),
+        name: row[5].toString()
+      });
+    }
+  }
+  return result;
+}
+
+function saveRegularPrayersData(ss, list) {
+  var sheet = getRegularPrayersSheet(ss);
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, 6).setValues([["ID", "요일인덱스", "요일명", "시간인덱스", "시간라벨", "성명"]]);
+  sheet.getRange(1, 1, 1, 6).setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold");
+
+  if (list && list.length > 0) {
+    var rows = [];
+    for (var i = 0; i < list.length; i++) {
+      var item = list[i];
+      rows.push([
+        item.id || (Date.now() + i).toString(),
+        item.dayIndex,
+        item.dayName,
+        item.timeIndex,
+        item.timeLabel,
+        item.name
+      ]);
+    }
+    sheet.getRange(2, 1, rows.length, 6).setValues(rows);
   }
 }
 

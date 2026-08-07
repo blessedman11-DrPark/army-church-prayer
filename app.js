@@ -33,6 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       console.error('Storage error:', e);
     }
+
+    if (STATE.apiUrl) {
+      fetch(STATE.apiUrl, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'saveRegularPrayers',
+          regularPrayers: STATE.regularPrayers
+        })
+      }).catch(err => console.error('Save regular prayers backend error:', err));
+    }
   }
 
   // ⚡ 인메모리 데이터 캐시
@@ -307,6 +317,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (result.startDate) {
           STATE.startDate = result.startDate;
+        }
+        if (result.regularPrayers && Array.isArray(result.regularPrayers)) {
+          STATE.regularPrayers = result.regularPrayers;
+          try {
+            localStorage.setItem('army_church_regular_prayers', JSON.stringify(STATE.regularPrayers));
+          } catch (e) {}
         }
         
         // 데이터 변경 여부 감지 및 무소음 렌더링
