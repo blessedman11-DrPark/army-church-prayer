@@ -687,14 +687,14 @@ body {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
   border-radius: var(--radius-sm);
-  padding: 14px;
-  margin-bottom: 16px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
 }
 
 .reg-form-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .reg-form-row:last-child {
@@ -706,7 +706,7 @@ body {
 .align-end { align-items: flex-end; }
 
 .reg-table-wrapper {
-  max-height: 240px;
+  max-height: 360px;
   overflow-y: auto;
   border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
@@ -716,25 +716,29 @@ body {
 .reg-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 12.5px;
 }
 
 .reg-table th {
   background: #f1f5f9 !important;
   color: #334155 !important;
-  padding: 8px 10px !important;
+  padding: 5px 8px !important;
   font-weight: 700;
   text-align: left;
   border-bottom: 1px solid #cbd5e1 !important;
   position: sticky;
   top: 0;
+  z-index: 2;
+  font-size: 12px;
 }
 
 .reg-table td {
-  padding: 8px 10px;
+  padding: 4px 8px !important;
   border-bottom: 1px solid #f1f5f9;
   color: #1e293b;
   vertical-align: middle;
+  font-size: 12.5px;
+  line-height: 1.25;
 }
 
 .reg-table tr:hover td {
